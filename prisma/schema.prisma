@@ -1,0 +1,179 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  name          String?
+  image         String?
+  emailVerified DateTime?
+  accessToken   String?
+  refreshToken  String?
+  applications  Application[]
+  emailSyncs    EmailSync[]
+  accounts      Account[]
+  sessions      Session[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Application {
+  id            String              @id @default(cuid())
+  userId        String
+  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company       String
+  position      String
+  status        ApplicationStatus   @default(APPLIED)
+  url           String?
+  salary        String?
+  location      String?
+  contactName   String?
+  contactEmail  String?
+  notes         String?
+  appliedAt     DateTime            @default(now())
+  nextAction    String?
+  nextActionAt  DateTime?
+  source        ApplicationSource   @default(MANUAL)
+  emails        Email[]
+  followUps     FollowUp[]
+  statusHistory StatusChange[]
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  @@index([userId, status])
+  @@index([userId, appliedAt])
+}
+
+model Email {
+  id              String       @id @default(cuid())
+  applicationId   String?
+  application     Application? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+  gmailId         String       @unique
+  threadId        String?
+  from            String
+  to              String
+  subject         String
+  bodyPreview     String
+  bodyFull        String
+  receivedAt      DateTime
+  isInbound       Boolean
+  isParsed        Boolean      @default(false)
+  aiAnalysis      Json?
+  createdAt       DateTime     @default(now())
+
+  @@index([gmailId])
+  @@index([applicationId])
+}
+
+model FollowUp {
+  id              String          @id @default(cuid())
+  applicationId   String
+  application     Application     @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  type            FollowUpType    @default(EMAIL)
+  status          FollowUpStatus  @default(DRAFT)
+  subject         String?
+  body            String
+  scheduledAt     DateTime?
+  sentAt          DateTime?
+  aiGenerated     Boolean         @default(false)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([applicationId])
+  @@index([status, scheduledAt])
+}
+
+model StatusChange {
+  id              String            @id @default(cuid())
+  applicationId   String
+  application     Application       @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  fromStatus      ApplicationStatus
+  toStatus        ApplicationStatus
+  reason          String?
+  changedAt       DateTime          @default(now())
+
+  @@index([applicationId])
+}
+
+model EmailSync {
+  id            String        @id @default(cuid())
+  userId        String
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status        SyncStatus    @default(PENDING)
+  emailsFound   Int           @default(0)
+  emailsParsed  Int           @default(0)
+  startedAt     DateTime      @default(now())
+  completedAt   DateTime?
+  error         String?
+  lastHistoryId String?
+
+  @@index([userId, startedAt])
+}
+
+enum ApplicationStatus {
+  APPLIED
+  SCREENING
+  INTERVIEW
+  TECHNICAL
+  OFFER
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+  NO_RESPONSE
+}
+
+enum ApplicationSource {
+  MANUAL
+  EMAIL_DETECTED
+}
+
+enum FollowUpType {
+  EMAIL
+  LINKEDIN
+  PHONE
+}
+
+enum FollowUpStatus {
+  DRAFT
+  SCHEDULED
+  SENT
+  CANCELLED
+}
+
+enum SyncStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}

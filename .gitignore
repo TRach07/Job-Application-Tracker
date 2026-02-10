@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Docker volumes
+postgres_data/
+ollama_data/
+
+# Keep .env.example committed
+!.env.example

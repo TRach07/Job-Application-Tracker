@@ -1,0 +1,172 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { Activity, TrendingUp, Calendar, Bell } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import type { ApplicationStatus } from "@prisma/client";
+
+interface ApplicationData {
+  id: string;
+  status: ApplicationStatus;
+  appliedAt: string;
+  followUps?: { status: string }[];
+  _count?: { followUps: number };
+}
+
+interface Stats {
+  active: number;
+  responseRate: number;
+  interviews: number;
+  pendingFollowUps: number;
+}
+
+const ACTIVE_STATUSES: ApplicationStatus[] = [
+  "APPLIED",
+  "SCREENING",
+  "INTERVIEW",
+  "TECHNICAL",
+  "OFFER",
+];
+
+function computeStats(applications: ApplicationData[]): Stats {
+  const total = applications.length;
+
+  const active = applications.filter((a) =>
+    ACTIVE_STATUSES.includes(a.status)
+  ).length;
+
+  const withResponse = applications.filter(
+    (a) => a.status !== "APPLIED" && a.status !== "NO_RESPONSE"
+  ).length;
+  const responseRate = total > 0 ? Math.round((withResponse / total) * 100) : 0;
+
+  const interviews = applications.filter(
+    (a) => a.status === "INTERVIEW" || a.status === "TECHNICAL"
+  ).length;
+
+  const pendingFollowUps = applications.reduce((count, a) => {
+    if (a.followUps && a.followUps.length > 0) {
+      return count + a.followUps.filter((f) => f.status === "DRAFT").length;
+    }
+    return count;
+  }, 0);
+
+  return { active, responseRate, interviews, pendingFollowUps };
+}
+
+const STAT_CARDS = [
+  {
+    key: "active" as const,
+    title: "Candidatures actives",
+    icon: Activity,
+    format: (v: number) => `${v}`,
+    description: "En cours de traitement",
+    iconColor: "text-blue-500",
+  },
+  {
+    key: "responseRate" as const,
+    title: "Taux de réponse",
+    icon: TrendingUp,
+    format: (v: number) => `${v}%`,
+    description: "Des candidatures avec retour",
+    iconColor: "text-emerald-500",
+  },
+  {
+    key: "interviews" as const,
+    title: "Entretiens",
+    icon: Calendar,
+    format: (v: number) => `${v}`,
+    description: "Entretiens et tests techniques",
+    iconColor: "text-violet-500",
+  },
+  {
+    key: "pendingFollowUps" as const,
+    title: "Relances en attente",
+    icon: Bell,
+    format: (v: number) => `${v}`,
+    description: "Brouillons à envoyer",
+    iconColor: "text-amber-500",
+  },
+];
+
+function StatsCardSkeleton() {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-4 w-4 rounded" />
+      </CardHeader>
+      <CardContent>
+        <Skeleton className="h-8 w-16 mb-1" />
+        <Skeleton className="h-3 w-32" />
+      </CardContent>
+    </Card>
+  );
+}
+
+export function StatsCards() {
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const res = await fetch("/api/applications");
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error);
+        const computed = computeStats(json.data);
+        setStats(computed);
+      } catch {
+        setStats({ active: 0, responseRate: 0, interviews: 0, pendingFollowUps: 0 });
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchStats();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <StatsCardSkeleton key={i} />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {STAT_CARDS.map((card) => {
+        const Icon = card.icon;
+        const value = stats ? stats[card.key] : 0;
+
+        return (
+          <Card key={card.key} className="bg-zinc-950 border-zinc-800">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-zinc-400">
+                {card.title}
+              </CardTitle>
+              <Icon className={`h-4 w-4 ${card.iconColor}`} />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-zinc-50">
+                {card.format(value)}
+              </div>
+              <p className="text-xs text-zinc-500 mt-1">
+                {card.description}
+              </p>
+            </CardContent>
+          </Card>
+        );
+      })}
+    </div>
+  );
+}
