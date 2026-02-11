@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
-import { generateCompletion, extractJSON } from "@/lib/ollama";
+import { generateCompletion } from "@/lib/groq";
+import { extractJSON } from "@/lib/ai-utils";
+import { anonymizeFollowUpFields, deanonymizeObject } from "@/lib/anonymizer";
 import { FOLLOW_UP_PROMPT, fillPrompt } from "@/constants/prompts";
 import type { GeneratedFollowUp } from "@/types/follow-up";
 import { STATUS_CONFIG } from "@/constants/status";
@@ -47,22 +49,31 @@ export async function generateFollowUp(
 
   const lastContact = application.emails[0]?.receivedAt || application.appliedAt;
 
-  const prompt = fillPrompt(FOLLOW_UP_PROMPT, {
+  // Anonymize PII before sending to external AI
+  const anonymized = anonymizeFollowUpFields({
     userName: application.user?.name || "l'utilisateur",
+    emailSummary,
+  });
+
+  const prompt = fillPrompt(FOLLOW_UP_PROMPT, {
+    userName: anonymized.userName,
     company: application.company,
     position: application.position,
     appliedAt: application.appliedAt.toLocaleDateString("fr-FR"),
     lastContactDate: lastContact.toLocaleDateString("fr-FR"),
     status: STATUS_CONFIG[application.status].label,
-    emailSummary,
+    emailSummary: anonymized.emailSummary,
   });
 
   const response = await generateCompletion(prompt);
-  const parsed = extractJSON<GeneratedFollowUp>(response);
+  const rawParsed = extractJSON<GeneratedFollowUp>(response);
 
-  if (!parsed) {
+  if (!rawParsed) {
     throw new Error("Failed to generate follow-up");
   }
+
+  // De-anonymize to restore real values before saving
+  const parsed = deanonymizeObject(rawParsed, anonymized.mapping);
 
   // Save as draft
   await prisma.followUp.create({

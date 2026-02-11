@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { listMessages, getMessage, GMAIL_JOB_QUERY } from "@/lib/gmail";
+import { preFilterEmail } from "@/lib/email-filter";
 
 export async function syncEmails(userId: string) {
   const sync = await prisma.emailSync.create({
@@ -18,7 +19,8 @@ export async function syncEmails(userId: string) {
     });
 
     let emailsFound = 0;
-    let emailsParsed = 0;
+    let emailsFiltered = 0;
+    let emailsPassed = 0;
 
     for (const msg of messages) {
       const existing = await prisma.email.findUnique({
@@ -34,6 +36,13 @@ export async function syncEmails(userId: string) {
         const isInbound = !fullMessage.from.includes(user?.email || "");
         const bodyPreview = fullMessage.body.substring(0, 500);
 
+        // Deterministic pre-filter
+        const filterResult = preFilterEmail({
+          from: fullMessage.from,
+          subject: fullMessage.subject,
+          bodyPreview,
+        });
+
         await prisma.email.create({
           data: {
             gmailId: fullMessage.id,
@@ -45,10 +54,18 @@ export async function syncEmails(userId: string) {
             bodyFull: fullMessage.body,
             receivedAt: fullMessage.receivedAt,
             isInbound,
+            userId,
+            filterStatus: filterResult.status,
+            filterReason: filterResult.reason,
+            reviewStatus: filterResult.passed ? "PENDING" : "SKIPPED",
           },
         });
 
-        emailsParsed++;
+        if (filterResult.passed) {
+          emailsPassed++;
+        } else {
+          emailsFiltered++;
+        }
       } catch (error) {
         console.error(`Failed to sync message ${msg.id}:`, error);
       }
@@ -59,12 +76,12 @@ export async function syncEmails(userId: string) {
       data: {
         status: "COMPLETED",
         emailsFound,
-        emailsParsed,
+        emailsParsed: emailsPassed,
         completedAt: new Date(),
       },
     });
 
-    return { emailsFound, emailsParsed };
+    return { emailsFound, emailsFiltered, emailsPassed };
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";

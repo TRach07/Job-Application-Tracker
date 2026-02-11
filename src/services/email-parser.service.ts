@@ -1,11 +1,41 @@
 import { prisma } from "@/lib/prisma";
-import { generateCompletion, extractJSON, checkOllamaHealth } from "@/lib/ollama";
+import { generateCompletion } from "@/lib/groq";
+import { extractJSON } from "@/lib/ai-utils";
+import { anonymizeEmailFields, deanonymizeObject } from "@/lib/anonymizer";
 import { EMAIL_PARSE_PROMPT, fillPrompt } from "@/constants/prompts";
 import type { EmailParseResult } from "@/types/email";
-import type { ApplicationStatus } from "@prisma/client";
 
-const CONFIDENCE_THRESHOLD = 0.7;
+const CONFIDENCE_THRESHOLD = 0.85;
 
+/**
+ * Find an existing application linked to the same Gmail thread.
+ * If an email in the same thread is already linked to an Application, auto-link.
+ */
+async function findApplicationByThread(
+  threadId: string | null,
+  userId?: string
+): Promise<{ id: string; company: string } | null> {
+  if (!threadId || !userId) return null;
+
+  const linkedEmail = await prisma.email.findFirst({
+    where: {
+      threadId,
+      applicationId: { not: null },
+      application: { userId },
+    },
+    include: {
+      application: { select: { id: true, company: true } },
+    },
+  });
+
+  return linkedEmail?.application ?? null;
+}
+
+/**
+ * Parse a single email with AI.
+ * NEVER auto-creates an Application.
+ * Marks the email as PENDING (awaiting review) or SKIPPED (not job-related).
+ */
 export async function parseEmail(emailId: string, userId?: string) {
   const email = await prisma.email.findUnique({
     where: { id: emailId },
@@ -15,129 +45,128 @@ export async function parseEmail(emailId: string, userId?: string) {
     throw new Error("Email not found");
   }
 
-  const prompt = fillPrompt(EMAIL_PARSE_PROMPT, {
+  // Step 1: Thread matching — if the thread is already linked to an application, auto-link
+  const threadMatch = await findApplicationByThread(email.threadId, userId);
+  if (threadMatch) {
+    await prisma.email.update({
+      where: { id: emailId },
+      data: {
+        applicationId: threadMatch.id,
+        isParsed: true,
+        reviewStatus: "AUTO_LINKED",
+        aiAnalysis: JSON.parse(
+          JSON.stringify({
+            auto_linked: true,
+            reason: `Thread match: ${threadMatch.company}`,
+          })
+        ),
+      },
+    });
+    return { auto_linked: true, applicationId: threadMatch.id };
+  }
+
+  // Step 2: AI parsing with PII anonymization
+  const anonymized = anonymizeEmailFields({
     from: email.from,
     to: email.to,
     subject: email.subject,
-    date: email.receivedAt.toISOString(),
     body: email.bodyFull.substring(0, 3000),
   });
 
-  const response = await generateCompletion(prompt);
-  const parsed = extractJSON<EmailParseResult>(response);
+  // Log anonymized data sent to external API (verify no PII leaks)
+  console.log(`[anonymizer] "${email.subject}" — sent to Groq:`);
+  console.log(`  from: ${anonymized.from}`);
+  console.log(`  to: ${anonymized.to}`);
+  console.log(`  body (first 300 chars): ${anonymized.body.substring(0, 300)}`);
+  console.log(`  mapping: ${JSON.stringify(Object.fromEntries(anonymized.mapping))}`);
 
-  if (!parsed) {
-    await prisma.email.update({
-      where: { id: emailId },
-      data: { isParsed: true, aiAnalysis: { error: "Failed to parse response" } },
-    });
-    return null;
-  }
-
-  await prisma.email.update({
-    where: { id: emailId },
-    data: { isParsed: true, aiAnalysis: JSON.parse(JSON.stringify(parsed)) },
+  const prompt = fillPrompt(EMAIL_PARSE_PROMPT, {
+    from: anonymized.from,
+    to: anonymized.to,
+    subject: anonymized.subject,
+    date: email.receivedAt.toISOString(),
+    body: anonymized.body,
   });
 
-  if (parsed.is_job_related && parsed.confidence >= CONFIDENCE_THRESHOLD && userId) {
-    await linkOrCreateApplication(emailId, parsed, userId);
-  }
+  try {
+    const response = await generateCompletion(prompt);
+    const rawParsed = extractJSON<EmailParseResult>(response);
+    const parsed = rawParsed ? deanonymizeObject(rawParsed, anonymized.mapping) : null;
 
-  return parsed;
-}
+    console.log(`[email-parser] "${email.subject}" → is_job_related=${parsed?.is_job_related}, confidence=${parsed?.confidence}, company=${parsed?.company}, rejection=${parsed?.rejection_reason}`);
 
-async function linkOrCreateApplication(
-  emailId: string,
-  parsed: EmailParseResult,
-  userId: string
-) {
-  if (!parsed.company) return;
-
-  // Try to find existing application for this user
-  const existing = await prisma.application.findFirst({
-    where: {
-      userId,
-      company: { contains: parsed.company, mode: "insensitive" },
-      ...(parsed.position
-        ? { position: { contains: parsed.position, mode: "insensitive" } }
-        : {}),
-    },
-  });
-
-  if (existing) {
-    await prisma.email.update({
-      where: { id: emailId },
-      data: { applicationId: existing.id },
-    });
-
-    if (parsed.status && parsed.status !== existing.status) {
-      await prisma.statusChange.create({
+    if (!parsed) {
+      await prisma.email.update({
+        where: { id: emailId },
         data: {
-          applicationId: existing.id,
-          fromStatus: existing.status,
-          toStatus: parsed.status as ApplicationStatus,
-          reason: `Detected from email: ${parsed.summary}`,
+          parseError: "AI response could not be parsed as JSON",
+          aiAnalysis: JSON.parse(
+            JSON.stringify({ raw_response: response.substring(0, 500) })
+          ),
         },
       });
-
-      await prisma.application.update({
-        where: { id: existing.id },
-        data: {
-          status: parsed.status as ApplicationStatus,
-          ...(parsed.contact_name ? { contactName: parsed.contact_name } : {}),
-          ...(parsed.contact_email
-            ? { contactEmail: parsed.contact_email }
-            : {}),
-          ...(parsed.next_steps ? { nextAction: parsed.next_steps } : {}),
-          ...(parsed.key_date
-            ? { nextActionAt: new Date(parsed.key_date) }
-            : {}),
-        },
-      });
+      return null;
     }
-  } else {
-    const app = await prisma.application.create({
+
+    // Step 3: Store analysis, mark as parsed
+    const isJobRelated =
+      parsed.is_job_related && parsed.confidence >= CONFIDENCE_THRESHOLD;
+
+    await prisma.email.update({
+      where: { id: emailId },
       data: {
-        userId,
-        company: parsed.company,
-        position: parsed.position || "Position non spécifiée",
-        status: (parsed.status as ApplicationStatus) || "APPLIED",
-        contactName: parsed.contact_name || undefined,
-        contactEmail: parsed.contact_email || undefined,
-        nextAction: parsed.next_steps || undefined,
-        nextActionAt: parsed.key_date ? new Date(parsed.key_date) : undefined,
-        source: "EMAIL_DETECTED",
+        isParsed: true,
+        parseError: null,
+        aiAnalysis: JSON.parse(JSON.stringify(parsed)),
+        reviewStatus: isJobRelated ? "PENDING" : "SKIPPED",
       },
     });
 
+    return parsed;
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : "Unknown AI error";
+    // Store error but do NOT set isParsed = true
     await prisma.email.update({
       where: { id: emailId },
-      data: { applicationId: app.id },
+      data: { parseError: errorMsg },
     });
+    // Re-throw rate limit errors so the caller can stop the loop
+    if (errorMsg.includes("429")) {
+      throw error;
+    }
+    return null;
   }
 }
 
+/**
+ * Parse all unparsed emails that passed the pre-filter.
+ */
 export async function parseUnparsedEmails(userId: string) {
-  const ollamaAvailable = await checkOllamaHealth();
-  if (!ollamaAvailable) {
-    return [{ error: "Ollama n'est pas disponible. Installez un modèle avec : ollama pull qwen2:1.5b" }];
-  }
-
   const unparsed = await prisma.email.findMany({
-    where: { isParsed: false },
+    where: {
+      isParsed: false,
+      userId,
+      filterStatus: "PASSED",
+    },
     orderBy: { receivedAt: "desc" },
     take: 20,
   });
 
   const results = [];
-  for (const email of unparsed) {
+  for (let i = 0; i < unparsed.length; i++) {
+    const email = unparsed[i];
     try {
       const result = await parseEmail(email.id, userId);
       results.push({ emailId: email.id, result });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
+      const message =
+        error instanceof Error ? error.message : "Unknown error";
       results.push({ emailId: email.id, error: message });
-      if (message.includes("not found")) break;
+      if (message.includes("not found") || message.includes("429")) break;
+    }
+    // Rate limit: wait between Groq calls
+    if (i < unparsed.length - 1) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
   }
 

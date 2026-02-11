@@ -41,22 +41,24 @@ export default function SettingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>AI locale (Ollama)</CardTitle>
+          <CardTitle>AI (Groq)</CardTitle>
           <CardDescription>
-            Configuration du modèle de langage local
+            LLM cloud with PII anonymization
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">URL</span>
-              <span className="font-mono">
-                {process.env.NEXT_PUBLIC_OLLAMA_URL || "http://localhost:11434"}
-              </span>
+              <span className="text-muted-foreground">Provider</span>
+              <span className="font-mono">Groq API</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Modèle</span>
-              <span className="font-mono">mistral:7b</span>
+              <span className="text-muted-foreground">Model</span>
+              <span className="font-mono">llama-3.3-70b-versatile</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Privacy</span>
+              <span className="font-mono">PII anonymized before sending</span>
             </div>
           </div>
         </CardContent>

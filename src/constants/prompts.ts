@@ -1,29 +1,58 @@
-export const EMAIL_PARSE_PROMPT = `Tu es un assistant spécialisé dans l'analyse d'emails de candidature.
+export const EMAIL_PARSE_PROMPT = `Tu es un classificateur d'emails de candidature d'emploi. Tu dois determiner si un email est une COMMUNICATION DIRECTE liee a une candidature specifique.
 
-Analyse l'email suivant et retourne UNIQUEMENT un objet JSON valide (pas de texte avant/après).
+REPONDS UNIQUEMENT avec un objet JSON valide. Aucun texte avant ou apres le JSON.
 
-Email:
----
-From: {from}
-To: {to}
-Subject: {subject}
+=== REGLES STRICTES ===
+
+Un email EST lie a une candidature (is_job_related: true) UNIQUEMENT si c'est :
+- Un accuse de reception d'une candidature envoyee ("nous avons bien recu votre candidature")
+- Une reponse d'un recruteur ou RH a propos d'une candidature specifique
+- Une convocation a un entretien (avec date, heure, lieu ou lien)
+- Un test technique ou exercice envoye par l'entreprise
+- Une offre d'emploi formelle adressee personnellement au candidat
+- Un refus/rejet d'une candidature specifique
+- Un email ENVOYE par le candidat pour postuler ou relancer
+
+Un email N'EST PAS lie a une candidature (is_job_related: false) si c'est :
+- Une alerte emploi ou notification de plateforme (LinkedIn, Indeed, Glassdoor, etc.)
+- Une newsletter ou email marketing
+- Un email qui mentionne des emplois/postes sans etre une communication directe
+- Une notification automatique ("X personnes ont vu votre profil")
+- Un email d'information generale sur le recrutement dans une entreprise
+- Un email de confirmation d'inscription a un site d'emploi
+- Un email commercial qui utilise des mots comme "opportunite" ou "offre"
+
+=== EMAIL A ANALYSER ===
+Note : Les champs "De" et "A" contiennent des identifiants anonymises comme [EMAIL_1]. C'est normal. Pour contact_email, utilise le placeholder tel quel si c'est l'email de l'expediteur.
+
+De: {from}
+A: {to}
+Objet: {subject}
 Date: {date}
-Body: {body}
----
+Corps: {body}
 
-Réponds avec ce JSON exact :
+=== FORMAT DE REPONSE (JSON uniquement, aucun texte avant ou apres) ===
 {
-  "is_job_related": boolean,
-  "confidence": number,
-  "company": string | null,
-  "position": string | null,
-  "status": "APPLIED" | "SCREENING" | "INTERVIEW" | "TECHNICAL" | "OFFER" | "REJECTED" | null,
-  "contact_name": string | null,
-  "contact_email": string | null,
-  "key_date": string | null,
-  "next_steps": string | null,
-  "summary": string
-}`;
+  "is_job_related": true ou false,
+  "confidence": nombre entre 0.0 et 1.0,
+  "rejection_reason": "explication de ta decision",
+  "company": "nom de l'entreprise ou null",
+  "position": "intitule du poste ou null",
+  "status": "APPLIED|SCREENING|INTERVIEW|TECHNICAL|OFFER|REJECTED ou null",
+  "contact_name": "nom du contact ou null",
+  "contact_email": "email du contact ou null",
+  "key_date": "date importante au format YYYY-MM-DD ou null",
+  "next_steps": "prochaines etapes ou null",
+  "summary": "resume court de l'email"
+}
+
+REGLES pour remplir le JSON :
+- Analyse l'email objectivement. Si c'est une VRAIE communication d'entreprise/recruteur a propos d'une candidature, mets is_job_related: true.
+- Si c'est une alerte, newsletter, notification de plateforme, mets is_job_related: false.
+- confidence: mets une valeur haute (>0.9) si tu es tres sur de ta reponse.
+- rejection_reason: explique TOUJOURS pourquoi tu as choisi true ou false, en te basant sur le CONTENU REEL de l'email.
+- status: utilise uniquement ces valeurs exactes si is_job_related est true: "APPLIED", "SCREENING", "INTERVIEW", "TECHNICAL", "OFFER", "REJECTED". Sinon null.
+- NE COPIE PAS d'exemple. Analyse chaque email individuellement.`;
 
 export const FOLLOW_UP_PROMPT = `Tu es un expert en communication professionnelle.
 IMPORTANT : Réponds UNIQUEMENT en français.
@@ -35,6 +64,8 @@ Contexte de la candidature de {userName} :
 - Dernier contact : {lastContactDate}
 - Statut actuel : {status}
 - Historique des échanges : {emailSummary}
+
+Note : Le nom de l'utilisateur peut apparaitre sous forme anonymisee [USER]. Utilise ce placeholder tel quel dans l'email genere.
 
 Génère un email de relance professionnel et personnalisé pour {userName}.
 Ton : professionnel mais chaleureux, pas générique.

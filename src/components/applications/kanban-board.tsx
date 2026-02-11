@@ -20,6 +20,7 @@ import type { CreateApplicationInput } from "@/types/application";
 import { KanbanColumn } from "./kanban-column";
 import { ApplicationCardComponent } from "./application-card";
 import { ApplicationForm } from "./application-form";
+import { EmailReviewPanel } from "@/components/emails/email-review-panel";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -43,6 +44,7 @@ export function KanbanBoard() {
   const { sync, isSyncing } = useEmailSync();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [activeCard, setActiveCard] = useState<ApplicationCardType | null>(
     null
   );
@@ -92,9 +94,30 @@ export function KanbanBoard() {
   const handleSync = useCallback(async () => {
     try {
       const result = await sync();
-      toast.success(
-        `Synchronisation terminee : ${result.emailsFound} emails trouves, ${result.emailsParsed} traites`
-      );
+      const parts = [];
+      if (result.emailsFound > 0)
+        parts.push(`${result.emailsFound} emails trouves`);
+      if (result.emailsFiltered > 0)
+        parts.push(`${result.emailsFiltered} filtres`);
+      if (result.emailsParsed > 0)
+        parts.push(`${result.emailsParsed} analyses`);
+      if (result.parseErrors > 0)
+        parts.push(`${result.parseErrors} erreurs`);
+      if (result.pendingReviewCount > 0)
+        parts.push(`${result.pendingReviewCount} en attente de review`);
+
+      if (parts.length > 0) {
+        const hasErrors = result.parseErrors > 0;
+        const toastFn = hasErrors ? toast.warning : toast.success;
+        toastFn(`Synchronisation terminee : ${parts.join(", ")}`);
+      } else {
+        toast.success("Synchronisation terminee : aucun nouvel email");
+      }
+
+      if (result.pendingReviewCount > 0) {
+        setIsReviewOpen(true);
+      }
+
       await fetchApplications();
     } catch {
       toast.error("Erreur lors de la synchronisation des emails");
@@ -204,6 +227,12 @@ export function KanbanBoard() {
           />
         </DialogContent>
       </Dialog>
+
+      <EmailReviewPanel
+        open={isReviewOpen}
+        onOpenChange={setIsReviewOpen}
+        onApplicationCreated={fetchApplications}
+      />
     </div>
   );
 }

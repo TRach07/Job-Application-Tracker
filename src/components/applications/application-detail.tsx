@@ -505,6 +505,36 @@ export function ApplicationDetail({ applicationId }: ApplicationDetailProps) {
                               {email.bodyPreview}
                             </p>
                           )}
+                          {email.aiAnalysis &&
+                            typeof email.aiAnalysis === "object" &&
+                            "company" in
+                              (email.aiAnalysis as Record<string, unknown>) &&
+                            (() => {
+                              const analysis = email.aiAnalysis as {
+                                company?: string;
+                                position?: string;
+                                confidence?: number;
+                              };
+                              return (
+                                <div className="mt-2 p-2 rounded bg-muted/50 text-xs space-y-0.5">
+                                  <p className="font-medium text-primary">
+                                    Analyse IA
+                                  </p>
+                                  {analysis.company && (
+                                    <p>Entreprise: {analysis.company}</p>
+                                  )}
+                                  {analysis.position && (
+                                    <p>Poste: {analysis.position}</p>
+                                  )}
+                                  {analysis.confidence != null && (
+                                    <p>
+                                      Confiance:{" "}
+                                      {Math.round(analysis.confidence * 100)}%
+                                    </p>
+                                  )}
+                                </div>
+                              );
+                            })()}
                         </div>
                       </div>
                     );

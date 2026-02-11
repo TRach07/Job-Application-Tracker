@@ -15,6 +15,7 @@ model User {
   accessToken   String?
   refreshToken  String?
   applications  Application[]
+  emails        Email[]
   emailSyncs    EmailSync[]
   accounts      Account[]
   sessions      Session[]
@@ -76,10 +77,12 @@ model Application {
 }
 
 model Email {
-  id              String       @id @default(cuid())
+  id              String            @id @default(cuid())
+  userId          String?
+  user            User?             @relation(fields: [userId], references: [id], onDelete: Cascade)
   applicationId   String?
-  application     Application? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
-  gmailId         String       @unique
+  application     Application?      @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+  gmailId         String            @unique
   threadId        String?
   from            String
   to              String
@@ -88,12 +91,20 @@ model Email {
   bodyFull        String
   receivedAt      DateTime
   isInbound       Boolean
-  isParsed        Boolean      @default(false)
+  isParsed        Boolean           @default(false)
   aiAnalysis      Json?
-  createdAt       DateTime     @default(now())
+  filterStatus    EmailFilterStatus @default(UNPROCESSED)
+  filterReason    String?
+  reviewStatus    EmailReviewStatus @default(PENDING)
+  reviewedAt      DateTime?
+  parseError      String?
+  createdAt       DateTime          @default(now())
 
   @@index([gmailId])
   @@index([applicationId])
+  @@index([userId, filterStatus])
+  @@index([userId, reviewStatus])
+  @@index([threadId])
 }
 
 model FollowUp {
@@ -176,4 +187,21 @@ enum SyncStatus {
   IN_PROGRESS
   COMPLETED
   FAILED
+}
+
+enum EmailFilterStatus {
+  UNPROCESSED
+  PASSED
+  REJECTED_SENDER
+  REJECTED_SUBJECT
+  REJECTED_CONTENT
+  USER_OVERRIDE
+}
+
+enum EmailReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SKIPPED
+  AUTO_LINKED
 }

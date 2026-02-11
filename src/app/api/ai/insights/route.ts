@@ -3,7 +3,9 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getAnalytics } from "@/services/analytics.service";
-import { generateCompletion, extractJSON } from "@/lib/ollama";
+import { generateCompletion } from "@/lib/groq";
+import { extractJSON } from "@/lib/ai-utils";
+import { anonymizeInsightsFields, deanonymizeObject } from "@/lib/anonymizer";
 import { INSIGHTS_PROMPT, fillPrompt } from "@/constants/prompts";
 import type { AIInsightsResponse } from "@/types/follow-up";
 
@@ -16,34 +18,42 @@ export async function GET() {
 
     const analytics = await getAnalytics(session.user.id);
 
-    const prompt = fillPrompt(INSIGHTS_PROMPT, {
+    // Anonymize user name before sending to external AI
+    const anonymized = anonymizeInsightsFields({
       userName: session.user.name || "l'utilisateur",
+    });
+
+    const prompt = fillPrompt(INSIGHTS_PROMPT, {
+      userName: anonymized.userName,
       analyticsData: JSON.stringify(analytics, null, 2),
     });
 
     const response = await generateCompletion(prompt);
-    const insights = extractJSON<AIInsightsResponse>(response);
+    const rawInsights = extractJSON<AIInsightsResponse>(response);
 
-    if (!insights) {
+    if (!rawInsights) {
       return NextResponse.json(
         { error: "Failed to generate insights" },
         { status: 500 }
       );
     }
 
+    // De-anonymize to restore real user name
+    const insights = deanonymizeObject(rawInsights, anonymized.mapping);
+
     return NextResponse.json({ data: insights });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    // If Ollama is not available or can't load the model, return a graceful fallback
-    if (message.includes("fetch failed") || message.includes("ECONNREFUSED") || message.includes("Failed to generate") || message.includes("Ollama failed") || message.includes("system memory") || message.includes("not found")) {
+    // If Groq API is unavailable, return a graceful fallback
+    if (message.includes("fetch failed") || message.includes("GROQ_API_KEY") || message.includes("Groq failed") || message.includes("Groq API error")) {
       return NextResponse.json({
         data: {
           insights: [
             {
               type: "warning" as const,
-              title: "IA indisponible",
-              description: "Le modèle Ollama n'est pas chargé ou n'a pas assez de mémoire. Vérifiez que le conteneur Docker a suffisamment de RAM.",
-              action: "Vérifiez Docker Desktop > Settings > Resources > Memory",
+              title: "AI unavailable",
+              description: "Groq API is not reachable or the API key is missing. Check your GROQ_API_KEY in .env.local.",
+              action: "Verify GROQ_API_KEY is set in .env.local",
             },
           ],
         },

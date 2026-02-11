@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { syncEmails } from "@/services/email-sync.service";
 import { parseUnparsedEmails } from "@/services/email-parser.service";
+import { getPendingReviewCount } from "@/services/email-review.service";
 
 export async function POST() {
   try {
@@ -10,21 +11,33 @@ export async function POST() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Step 1: Sync emails from Gmail
+    // Step 1: Sync + pre-filter
     const syncResult = await syncEmails(session.user.id);
 
-    // Step 2: Parse unparsed emails with AI
+    // Step 2: Parse emails that passed filter
     const parseResults = await parseUnparsedEmails(session.user.id);
+
+    // Step 3: Count items in review queue
+    const pendingReviewCount = await getPendingReviewCount(session.user.id);
+
+    const successCount = parseResults.filter(
+      (r) => !("error" in r) && r.result !== null
+    ).length;
+    const errorCount = parseResults.filter((r) => "error" in r).length;
 
     return NextResponse.json({
       data: {
         emailsFound: syncResult.emailsFound,
-        emailsParsed: syncResult.emailsParsed,
-        aiResults: parseResults,
+        emailsFiltered: syncResult.emailsFiltered,
+        emailsPassed: syncResult.emailsPassed,
+        emailsParsed: successCount,
+        parseErrors: errorCount,
+        pendingReviewCount,
       },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("[email-sync] Error:", message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

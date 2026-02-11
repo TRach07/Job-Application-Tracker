@@ -169,4 +169,4 @@ export async function getMessage(
 }
 
 export const GMAIL_JOB_QUERY =
-  "in:inbox OR in:sent (application OR candidature OR interview OR entretien OR offer OR offre OR position OR recrutement OR hiring OR recruitment)";
+  '{in:inbox in:sent} (candidature OR "votre candidature" OR "your application" OR entretien OR interview OR "offre d\'emploi" OR "job offer" OR recrutement) -category:promotions -category:social -category:forums -from:noreply -from:no-reply -from:notifications -label:newsletter';
