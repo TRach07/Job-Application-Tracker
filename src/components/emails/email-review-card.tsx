@@ -237,34 +237,38 @@ export function EmailReviewCard({
 
         {/* Actions */}
         {!isEditing && !isFiltered && (
-          <div className="flex gap-1.5">
+          <div className="flex flex-col gap-1.5">
             <Button
               size="sm"
-              className="h-7 text-xs flex-1"
+              className="h-8 text-xs w-full"
               onClick={handleApprove}
               disabled={isProcessing}
             >
-              <Check className="h-3 w-3 mr-1" />
+              <Check className="h-3.5 w-3.5 mr-1" />
               Approuver
             </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-7 text-xs"
-              onClick={startEditing}
-              disabled={isProcessing}
-            >
-              <Pencil className="h-3 w-3" />
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-7 text-xs text-destructive hover:text-destructive"
-              onClick={handleReject}
-              disabled={isProcessing}
-            >
-              <X className="h-3 w-3" />
-            </Button>
+            <div className="flex gap-1.5">
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 text-xs flex-1"
+                onClick={startEditing}
+                disabled={isProcessing}
+              >
+                <Pencil className="h-3.5 w-3.5 mr-1" />
+                Modifier
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 text-xs flex-1 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
+                onClick={handleReject}
+                disabled={isProcessing}
+              >
+                <X className="h-3.5 w-3.5 mr-1" />
+                Rejeter
+              </Button>
+            </div>
           </div>
         )}
 

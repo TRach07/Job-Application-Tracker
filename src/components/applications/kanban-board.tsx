@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   DndContext,
   closestCorners,
@@ -29,7 +29,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { RefreshCw, Plus } from "lucide-react";
+import { RefreshCw, Plus, MailCheck } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { KanbanCardSkeleton } from "@/components/shared/loading-skeleton";
 
@@ -45,9 +46,20 @@ export function KanbanBoard() {
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isReviewOpen, setIsReviewOpen] = useState(false);
+  const [pendingReviewCount, setPendingReviewCount] = useState(0);
   const [activeCard, setActiveCard] = useState<ApplicationCardType | null>(
     null
   );
+
+  // Fetch pending review count on mount
+  useEffect(() => {
+    fetch("/api/emails/review")
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.data) setPendingReviewCount(json.data.length);
+      })
+      .catch(() => {});
+  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -114,6 +126,8 @@ export function KanbanBoard() {
         toast.success("Synchronisation terminee : aucun nouvel email");
       }
 
+      setPendingReviewCount(result.pendingReviewCount || 0);
+
       if (result.pendingReviewCount > 0) {
         setIsReviewOpen(true);
       }
@@ -135,6 +149,22 @@ export function KanbanBoard() {
       }
     },
     [createApplication]
+  );
+
+  const handleReviewOpenChange = useCallback(
+    (open: boolean) => {
+      setIsReviewOpen(open);
+      if (!open) {
+        // Refresh pending count when panel closes
+        fetch("/api/emails/review")
+          .then((res) => res.json())
+          .then((json) => {
+            if (json.data) setPendingReviewCount(json.data.length);
+          })
+          .catch(() => {});
+      }
+    },
+    []
   );
 
   const getApplicationsForColumn = useCallback(
@@ -172,6 +202,19 @@ export function KanbanBoard() {
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold tracking-tight">Candidatures</h2>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsReviewOpen(true)}
+          >
+            <MailCheck className="h-4 w-4" />
+            Verification
+            {pendingReviewCount > 0 && (
+              <Badge variant="default" className="ml-1 h-5 px-1.5 text-xs">
+                {pendingReviewCount}
+              </Badge>
+            )}
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -230,7 +273,7 @@ export function KanbanBoard() {
 
       <EmailReviewPanel
         open={isReviewOpen}
-        onOpenChange={setIsReviewOpen}
+        onOpenChange={handleReviewOpenChange}
         onApplicationCreated={fetchApplications}
       />
     </div>

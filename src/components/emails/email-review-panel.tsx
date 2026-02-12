@@ -74,7 +74,7 @@ export function EmailReviewPanel({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-lg p-0 flex flex-col">
+      <SheetContent className="w-full sm:max-w-2xl p-0 flex flex-col">
         <SheetHeader className="p-6 pb-0">
           <SheetTitle>Verification des emails</SheetTitle>
           <SheetDescription>
