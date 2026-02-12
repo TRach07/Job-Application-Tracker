@@ -54,24 +54,35 @@ REGLES pour remplir le JSON :
 - status: utilise uniquement ces valeurs exactes si is_job_related est true: "APPLIED", "SCREENING", "INTERVIEW", "TECHNICAL", "OFFER", "REJECTED". Sinon null.
 - NE COPIE PAS d'exemple. Analyse chaque email individuellement.`;
 
-export const FOLLOW_UP_PROMPT = `Tu es un expert en communication professionnelle.
-IMPORTANT : Réponds UNIQUEMENT en français.
+export const FOLLOW_UP_PROMPT = `Tu es un expert en communication professionnelle specialise dans la recherche d'emploi.
+IMPORTANT : Reponds UNIQUEMENT en francais.
 
-Contexte de la candidature de {userName} :
+=== CONTEXTE ===
+{userName} a postule a une offre d'emploi et souhaite relancer l'entreprise car il/elle n'a pas eu de nouvelles recentes.
+
 - Entreprise : {company}
 - Poste : {position}
 - Date de candidature : {appliedAt}
 - Dernier contact : {lastContactDate}
 - Statut actuel : {status}
-- Historique des échanges : {emailSummary}
+- Historique des echanges : {emailSummary}
 
-Note : Le nom de l'utilisateur peut apparaitre sous forme anonymisee [USER]. Utilise ce placeholder tel quel dans l'email genere.
+=== INSTRUCTIONS ===
+Genere un email de RELANCE ecrit PAR LE CANDIDAT ({userName}) et ADRESSE A L'ENTREPRISE ({company}).
+Le but de cet email est de :
+- Rappeler poliment sa candidature au poste de {position}
+- Demander des nouvelles sur l'avancement du processus de recrutement
+- Reaffirmer sa motivation pour le poste
 
-Génère un email de relance professionnel et personnalisé pour {userName}.
-Ton : professionnel mais chaleureux, pas générique.
-Longueur : 4-6 phrases max.
+REGLES STRICTES :
+- L'email est ecrit du point de vue du CANDIDAT, pas de l'entreprise
+- Ne genere JAMAIS un email de reponse de l'entreprise au candidat
+- Ne genere JAMAIS un email d'accueil, de bienvenue ou de confirmation d'embauche
+- Ton : professionnel mais chaleureux, pas generique
+- Longueur : 4-6 phrases max
+- Si le nom de l'utilisateur apparait sous forme [USER], utilise ce placeholder tel quel
 
-Retourne UNIQUEMENT un JSON valide (pas de texte avant/après) :
+Retourne UNIQUEMENT un JSON valide (pas de texte avant/apres) :
 {
   "subject": string,
   "body": string,

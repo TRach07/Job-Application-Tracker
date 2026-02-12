@@ -58,8 +58,14 @@ export function FollowUpList() {
         method: "DELETE",
       });
       if (!res.ok) {
-        const json = await res.json();
-        throw new Error(json.error || "Erreur lors de la suppression");
+        let errorMessage = "Erreur lors de la suppression";
+        try {
+          const json = await res.json();
+          errorMessage = json.error || errorMessage;
+        } catch {
+          // Response was not JSON (e.g. HTML 404)
+        }
+        throw new Error(errorMessage);
       }
       toast.success("Relance supprim\u00e9e");
       await fetchFollowUps();
