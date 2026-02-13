@@ -5,6 +5,7 @@ import { z } from "zod";
 
 const generateSchema = z.object({
   applicationId: z.string().min(1),
+  locale: z.enum(["fr", "en"]).optional().default("fr"),
 });
 
 export async function POST(request: NextRequest) {
@@ -15,9 +16,9 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { applicationId } = generateSchema.parse(body);
+    const { applicationId, locale } = generateSchema.parse(body);
 
-    const followUp = await generateFollowUp(applicationId);
+    const followUp = await generateFollowUp(applicationId, locale);
     return NextResponse.json({ data: followUp });
   } catch (error) {
     if (error instanceof z.ZodError) {

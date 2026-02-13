@@ -15,6 +15,7 @@ import { useEmailReview } from "@/hooks/use-email-review";
 import { EmailReviewCard } from "./email-review-card";
 import { toast } from "sonner";
 import { Inbox, Filter } from "lucide-react";
+import { useTranslation } from "@/hooks/use-translation";
 
 interface EmailReviewPanelProps {
   open: boolean;
@@ -36,6 +37,7 @@ export function EmailReviewPanel({
     processAction,
     overrideFilter,
   } = useEmailReview();
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (open) {
@@ -76,9 +78,9 @@ export function EmailReviewPanel({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-2xl p-0 flex flex-col">
         <SheetHeader className="p-6 pb-0">
-          <SheetTitle>Verification des emails</SheetTitle>
+          <SheetTitle>{t.emailReview.panelTitle}</SheetTitle>
           <SheetDescription>
-            Verifiez les emails detectes avant de creer des candidatures.
+            {t.emailReview.panelDesc}
           </SheetDescription>
         </SheetHeader>
 
@@ -86,7 +88,7 @@ export function EmailReviewPanel({
           <TabsList className="mx-6 mt-4">
             <TabsTrigger value="review" className="flex items-center gap-1.5">
               <Inbox className="h-3.5 w-3.5" />
-              A verifier
+              {t.emailReview.tabReview}
               {queue.length > 0 && (
                 <Badge variant="default" className="ml-1 h-5 px-1.5 text-xs">
                   {queue.length}
@@ -95,7 +97,7 @@ export function EmailReviewPanel({
             </TabsTrigger>
             <TabsTrigger value="filtered" className="flex items-center gap-1.5">
               <Filter className="h-3.5 w-3.5" />
-              Filtres
+              {t.emailReview.tabFiltered}
               {filteredEmails.length > 0 && (
                 <Badge
                   variant="secondary"
@@ -122,9 +124,9 @@ export function EmailReviewPanel({
                 ) : queue.length === 0 ? (
                   <div className="text-center py-12 text-muted-foreground">
                     <Inbox className="h-10 w-10 mx-auto mb-3 opacity-30" />
-                    <p className="text-sm">Aucun email a verifier</p>
+                    <p className="text-sm">{t.emailReview.emptyReview}</p>
                     <p className="text-xs mt-1">
-                      Synchronisez vos emails pour commencer.
+                      {t.emailReview.emptyReviewDesc}
                     </p>
                   </div>
                 ) : (
@@ -146,7 +148,7 @@ export function EmailReviewPanel({
                 {filteredEmails.length === 0 ? (
                   <div className="text-center py-12 text-muted-foreground">
                     <Filter className="h-10 w-10 mx-auto mb-3 opacity-30" />
-                    <p className="text-sm">Aucun email filtre</p>
+                    <p className="text-sm">{t.emailReview.emptyFiltered}</p>
                   </div>
                 ) : (
                   filteredEmails.map((email) => (

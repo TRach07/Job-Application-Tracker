@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import {
@@ -10,6 +10,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import type { Application } from "@prisma/client";
+import { useTranslation } from "@/hooks/use-translation";
 
 const RESPONDED_STATUSES = [
   "SCREENING",
@@ -31,6 +32,7 @@ export function ResponseRate() {
     { name: string; value: number }[]
   >([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { t } = useTranslation();
 
   useEffect(() => {
     async function fetchData() {
@@ -45,8 +47,8 @@ export function ResponseRate() {
         if (total === 0) {
           setRate(0);
           setChartData([
-            { name: "Avec réponse", value: 0 },
-            { name: "Sans réponse", value: 1 },
+            { name: t.analytics.withResponse, value: 0 },
+            { name: t.analytics.withoutResponse, value: 1 },
           ]);
           return;
         }
@@ -59,8 +61,8 @@ export function ResponseRate() {
 
         setRate(percentage);
         setChartData([
-          { name: "Avec réponse", value: responded },
-          { name: "Sans réponse", value: notResponded },
+          { name: t.analytics.withResponse, value: responded },
+          { name: t.analytics.withoutResponse, value: notResponded },
         ]);
       } catch {
         setRate(0);
@@ -71,13 +73,13 @@ export function ResponseRate() {
     }
 
     fetchData();
-  }, []);
+  }, [t]);
 
   if (isLoading) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Taux de r&eacute;ponse</CardTitle>
+          <CardTitle>{t.analytics.responseRateTitle}</CardTitle>
         </CardHeader>
         <CardContent className="flex items-center justify-center gap-6">
           <Skeleton className="h-24 w-24 rounded-full" />
@@ -90,7 +92,7 @@ export function ResponseRate() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Taux de r&eacute;ponse</CardTitle>
+        <CardTitle>{t.analytics.responseRateTitle}</CardTitle>
       </CardHeader>
       <CardContent className="flex items-center justify-center gap-6">
         <div className="h-28 w-28">
@@ -125,7 +127,7 @@ export function ResponseRate() {
             {rate}%
           </span>
           <span className="text-sm text-muted-foreground">
-            de r&eacute;ponses
+            {t.analytics.responseRateLabel}
           </span>
         </div>
       </CardContent>

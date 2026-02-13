@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import {
@@ -16,23 +16,21 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { STATUS_CONFIG } from "@/constants/status";
+import { STATUS_CONFIG, getStatusLabel } from "@/constants/status";
 import type { ApplicationStatus } from "@prisma/client";
+import { useTranslation } from "@/hooks/use-translation";
+import type { TranslationDictionary } from "@/i18n/types";
 
-/**
- * Map Tailwind bg-color classes from STATUS_CONFIG to hex values
- * used by Recharts for rendering chart segments.
- */
 const STATUS_HEX_COLORS: Record<ApplicationStatus, string> = {
-  APPLIED: "#64748b",     // slate-500
-  SCREENING: "#3b82f6",   // blue-500
-  INTERVIEW: "#8b5cf6",   // violet-500
-  TECHNICAL: "#f59e0b",   // amber-500
-  OFFER: "#10b981",       // emerald-500
-  ACCEPTED: "#22c55e",    // green-500
-  REJECTED: "#ef4444",    // red-500
-  WITHDRAWN: "#6b7280",   // gray-500
-  NO_RESPONSE: "#71717a", // zinc-500
+  APPLIED: "#64748b",
+  SCREENING: "#3b82f6",
+  INTERVIEW: "#8b5cf6",
+  TECHNICAL: "#f59e0b",
+  OFFER: "#10b981",
+  ACCEPTED: "#22c55e",
+  REJECTED: "#ef4444",
+  WITHDRAWN: "#6b7280",
+  NO_RESPONSE: "#71717a",
 };
 
 interface ChartDataPoint {
@@ -45,7 +43,7 @@ interface ApplicationData {
   status: ApplicationStatus;
 }
 
-function buildChartData(applications: ApplicationData[]): ChartDataPoint[] {
+function buildChartData(applications: ApplicationData[], t: TranslationDictionary): ChartDataPoint[] {
   const counts: Partial<Record<ApplicationStatus, number>> = {};
 
   for (const app of applications) {
@@ -54,7 +52,7 @@ function buildChartData(applications: ApplicationData[]): ChartDataPoint[] {
 
   return Object.entries(counts)
     .map(([status, value]) => ({
-      name: STATUS_CONFIG[status as ApplicationStatus].label,
+      name: getStatusLabel(status as ApplicationStatus, t),
       value: value as number,
       status: status as ApplicationStatus,
     }))
@@ -67,9 +65,10 @@ function buildChartData(applications: ApplicationData[]): ChartDataPoint[] {
 interface CustomTooltipProps {
   active?: boolean;
   payload?: { name: string; value: number; payload: ChartDataPoint }[];
+  t: TranslationDictionary;
 }
 
-function CustomTooltip({ active, payload }: CustomTooltipProps) {
+function CustomTooltip({ active, payload, t }: CustomTooltipProps) {
   if (!active || !payload || payload.length === 0) return null;
 
   const data = payload[0];
@@ -77,7 +76,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
     <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 shadow-md">
       <p className="text-sm font-medium text-zinc-50">{data.name}</p>
       <p className="text-sm text-zinc-400">
-        {data.value} candidature{data.value > 1 ? "s" : ""}
+        {data.value} {data.value > 1 ? t.dashboard.statusChartTooltipPlural : t.dashboard.statusChartTooltip}
       </p>
     </div>
   );
@@ -99,6 +98,7 @@ function ChartSkeleton() {
 export function StatusChart() {
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { t } = useTranslation();
 
   useEffect(() => {
     async function fetchData() {
@@ -106,7 +106,7 @@ export function StatusChart() {
         const res = await fetch("/api/applications");
         const json = await res.json();
         if (!res.ok) throw new Error(json.error);
-        const data = buildChartData(json.data);
+        const data = buildChartData(json.data, t);
         setChartData(data);
       } catch {
         setChartData([]);
@@ -116,7 +116,7 @@ export function StatusChart() {
     }
 
     fetchData();
-  }, []);
+  }, [t]);
 
   if (isLoading) {
     return <ChartSkeleton />;
@@ -128,14 +128,14 @@ export function StatusChart() {
     <Card className="bg-zinc-950 border-zinc-800">
       <CardHeader>
         <CardTitle className="text-zinc-50">
-          Répartition par statut
+          {t.dashboard.statusChartTitle}
         </CardTitle>
       </CardHeader>
       <CardContent>
         {chartData.length === 0 ? (
           <div className="flex items-center justify-center h-[300px]">
             <p className="text-sm text-zinc-500">
-              Aucune candidature pour le moment
+              {t.dashboard.statusChartEmpty}
             </p>
           </div>
         ) : (
@@ -158,14 +158,13 @@ export function StatusChart() {
                   />
                 ))}
               </Pie>
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={<CustomTooltip t={t} />} />
               <Legend
                 verticalAlign="bottom"
                 formatter={(value: string) => (
                   <span className="text-sm text-zinc-400">{value}</span>
                 )}
               />
-              {/* Center label showing total */}
               <text
                 x="50%"
                 y="47%"
@@ -182,7 +181,7 @@ export function StatusChart() {
                 dominantBaseline="middle"
                 className="fill-zinc-500 text-xs"
               >
-                Total
+                {t.common.total}
               </text>
             </PieChart>
           </ResponsiveContainer>

@@ -8,6 +8,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Building, MapPin, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLocaleDate } from "@/hooks/use-locale-date";
 
 interface ApplicationCardComponentProps {
   application: ApplicationCard;
@@ -19,6 +20,8 @@ export function ApplicationCardComponent({
   isOverlay = false,
 }: ApplicationCardComponentProps) {
   const router = useRouter();
+
+  const { intlLocale } = useLocaleDate();
 
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
@@ -32,7 +35,7 @@ export function ApplicationCardComponent({
     : undefined;
 
   const formattedDate = new Date(application.appliedAt).toLocaleDateString(
-    "fr-FR",
+    intlLocale,
     {
       day: "numeric",
       month: "short",

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import {
@@ -16,6 +16,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import type { AIInsight } from "@/types/follow-up";
+import { useTranslation } from "@/hooks/use-translation";
 
 const INSIGHT_CONFIG: Record<
   AIInsight["type"],
@@ -56,10 +57,11 @@ export function InsightsPanel() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { t, locale } = useTranslation();
 
   const fetchInsights = useCallback(async () => {
     try {
-      const res = await fetch("/api/ai/insights");
+      const res = await fetch(`/api/ai/insights?locale=${locale}`);
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Erreur lors du chargement");
       setInsights(json.data?.insights ?? json.insights ?? []);
@@ -67,7 +69,7 @@ export function InsightsPanel() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");
     }
-  }, []);
+  }, [locale]);
 
   useEffect(() => {
     async function initialLoad() {
@@ -87,7 +89,7 @@ export function InsightsPanel() {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Insights AI</CardTitle>
+        <CardTitle>{t.analytics.insightsTitle}</CardTitle>
         <Button
           variant="outline"
           size="sm"
@@ -97,7 +99,7 @@ export function InsightsPanel() {
           <RefreshCw
             className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
           />
-          Actualiser les insights
+          {t.analytics.insightsRefresh}
         </Button>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -113,7 +115,7 @@ export function InsightsPanel() {
           </div>
         ) : insights.length === 0 ? (
           <div className="py-8 text-center text-sm text-muted-foreground">
-            Aucun insight disponible pour le moment.
+            {t.analytics.insightsEmpty}
           </div>
         ) : (
           insights.map((insight, index) => {

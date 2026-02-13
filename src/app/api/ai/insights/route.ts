@@ -9,23 +9,32 @@ import { anonymizeInsightsFields, deanonymizeObject } from "@/lib/anonymizer";
 import { INSIGHTS_PROMPT, fillPrompt } from "@/constants/prompts";
 import type { AIInsightsResponse } from "@/types/follow-up";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const analytics = await getAnalytics(session.user.id);
+    const { searchParams } = new URL(request.url);
+    const locale = searchParams.get("locale") === "en" ? "en" : "fr";
+
+    const analytics = await getAnalytics(session.user.id, locale);
+
+    const defaultUser = locale === "en" ? "the user" : "l'utilisateur";
+    const langInstruction = locale === "en"
+      ? "IMPORTANT: Respond ONLY in English."
+      : "IMPORTANT : Réponds UNIQUEMENT en français.";
 
     // Anonymize user name before sending to external AI
     const anonymized = anonymizeInsightsFields({
-      userName: session.user.name || "l'utilisateur",
+      userName: session.user.name || defaultUser,
     });
 
     const prompt = fillPrompt(INSIGHTS_PROMPT, {
       userName: anonymized.userName,
       analyticsData: JSON.stringify(analytics, null, 2),
+      languageInstruction: langInstruction,
     });
 
     const response = await generateCompletion(prompt);

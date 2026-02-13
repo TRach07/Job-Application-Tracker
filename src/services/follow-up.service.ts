@@ -4,7 +4,10 @@ import { extractJSON } from "@/lib/ai-utils";
 import { anonymizeFollowUpFields, deanonymizeObject } from "@/lib/anonymizer";
 import { FOLLOW_UP_PROMPT, fillPrompt } from "@/constants/prompts";
 import type { GeneratedFollowUp } from "@/types/follow-up";
-import { STATUS_CONFIG } from "@/constants/status";
+import { getStatusLabel } from "@/constants/status";
+import { fr } from "@/i18n/fr";
+import { en } from "@/i18n/en";
+import type { Locale } from "@/i18n/types";
 
 export async function getFollowUps(userId: string) {
   return prisma.followUp.findMany({
@@ -21,7 +24,8 @@ export async function getFollowUps(userId: string) {
 }
 
 export async function generateFollowUp(
-  applicationId: string
+  applicationId: string,
+  locale: Locale = "fr"
 ): Promise<GeneratedFollowUp> {
   const application = await prisma.application.findUnique({
     where: { id: applicationId },
@@ -39,19 +43,23 @@ export async function generateFollowUp(
     throw new Error("Application not found");
   }
 
+  const dict = locale === "en" ? en : fr;
+  const intlLocale = locale === "en" ? "en-US" : "fr-FR";
+  const langInstruction = dict.ai.languageInstruction;
+
   const emailSummary =
     application.emails
       .map(
         (e) =>
-          `[${e.receivedAt.toLocaleDateString()}] ${e.subject}: ${e.bodyPreview}`
+          `[${e.receivedAt.toLocaleDateString(intlLocale)}] ${e.subject}: ${e.bodyPreview}`
       )
-      .join("\n") || "Aucun échange email";
+      .join("\n") || dict.ai.noEmailExchanges;
 
   const lastContact = application.emails[0]?.receivedAt || application.appliedAt;
 
   // Anonymize PII before sending to external AI
   const anonymized = anonymizeFollowUpFields({
-    userName: application.user?.name || "l'utilisateur",
+    userName: application.user?.name || dict.ai.defaultUser,
     emailSummary,
   });
 
@@ -59,10 +67,11 @@ export async function generateFollowUp(
     userName: anonymized.userName,
     company: application.company,
     position: application.position,
-    appliedAt: application.appliedAt.toLocaleDateString("fr-FR"),
-    lastContactDate: lastContact.toLocaleDateString("fr-FR"),
-    status: STATUS_CONFIG[application.status].label,
+    appliedAt: application.appliedAt.toLocaleDateString(intlLocale),
+    lastContactDate: lastContact.toLocaleDateString(intlLocale),
+    status: getStatusLabel(application.status, dict),
     emailSummary: anonymized.emailSummary,
+    languageInstruction: langInstruction,
   });
 
   const response = await generateCompletion(prompt);

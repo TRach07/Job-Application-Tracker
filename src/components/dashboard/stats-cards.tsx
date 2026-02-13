@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { Activity, TrendingUp, Calendar, Bell } from "lucide-react";
@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ApplicationStatus } from "@prisma/client";
+import { useTranslation } from "@/hooks/use-translation";
 
 interface ApplicationData {
   id: string;
@@ -60,41 +61,6 @@ function computeStats(applications: ApplicationData[]): Stats {
   return { active, responseRate, interviews, pendingFollowUps };
 }
 
-const STAT_CARDS = [
-  {
-    key: "active" as const,
-    title: "Candidatures actives",
-    icon: Activity,
-    format: (v: number) => `${v}`,
-    description: "En cours de traitement",
-    iconColor: "text-blue-500",
-  },
-  {
-    key: "responseRate" as const,
-    title: "Taux de réponse",
-    icon: TrendingUp,
-    format: (v: number) => `${v}%`,
-    description: "Des candidatures avec retour",
-    iconColor: "text-emerald-500",
-  },
-  {
-    key: "interviews" as const,
-    title: "Entretiens",
-    icon: Calendar,
-    format: (v: number) => `${v}`,
-    description: "Entretiens et tests techniques",
-    iconColor: "text-violet-500",
-  },
-  {
-    key: "pendingFollowUps" as const,
-    title: "Relances en attente",
-    icon: Bell,
-    format: (v: number) => `${v}`,
-    description: "Brouillons à envoyer",
-    iconColor: "text-amber-500",
-  },
-];
-
 function StatsCardSkeleton() {
   return (
     <Card>
@@ -113,6 +79,7 @@ function StatsCardSkeleton() {
 export function StatsCards() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { t } = useTranslation();
 
   useEffect(() => {
     async function fetchStats() {
@@ -141,6 +108,41 @@ export function StatsCards() {
       </div>
     );
   }
+
+  const STAT_CARDS = [
+    {
+      key: "active" as const,
+      title: t.dashboard.statsActiveTitle,
+      icon: Activity,
+      format: (v: number) => `${v}`,
+      description: t.dashboard.statsActiveDesc,
+      iconColor: "text-blue-500",
+    },
+    {
+      key: "responseRate" as const,
+      title: t.dashboard.statsResponseRateTitle,
+      icon: TrendingUp,
+      format: (v: number) => `${v}%`,
+      description: t.dashboard.statsResponseRateDesc,
+      iconColor: "text-emerald-500",
+    },
+    {
+      key: "interviews" as const,
+      title: t.dashboard.statsInterviewsTitle,
+      icon: Calendar,
+      format: (v: number) => `${v}`,
+      description: t.dashboard.statsInterviewsDesc,
+      iconColor: "text-violet-500",
+    },
+    {
+      key: "pendingFollowUps" as const,
+      title: t.dashboard.statsPendingFollowUpsTitle,
+      icon: Bell,
+      format: (v: number) => `${v}`,
+      description: t.dashboard.statsPendingFollowUpsDesc,
+      iconColor: "text-amber-500",
+    },
+  ];
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

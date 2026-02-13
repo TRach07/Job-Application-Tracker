@@ -4,21 +4,24 @@ import { useSession } from "next-auth/react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/hooks/use-translation";
 
 export default function SettingsPage() {
   const { data: session } = useSession();
+  const { t, locale, setLocale } = useTranslation();
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Paramètres</h1>
-        <p className="text-muted-foreground">Gérez votre compte et vos préférences</p>
+        <h1 className="text-2xl font-bold">{t.settings.title}</h1>
+        <p className="text-muted-foreground">{t.settings.subtitle}</p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Profil</CardTitle>
-          <CardDescription>Informations de votre compte Google</CardDescription>
+          <CardTitle>{t.settings.profileTitle}</CardTitle>
+          <CardDescription>{t.settings.profileDesc}</CardDescription>
         </CardHeader>
         <CardContent className="flex items-center gap-4">
           <Avatar className="h-16 w-16">
@@ -33,7 +36,7 @@ export default function SettingsPage() {
               {session?.user?.email}
             </p>
             <Badge variant="secondary" className="mt-1">
-              Gmail connecté
+              {t.settings.gmailConnected}
             </Badge>
           </div>
         </CardContent>
@@ -41,9 +44,34 @@ export default function SettingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>AI (Groq)</CardTitle>
+          <CardTitle>{t.settings.languageTitle}</CardTitle>
+          <CardDescription>{t.settings.languageDesc}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-3">
+            <Button
+              variant={locale === "fr" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setLocale("fr")}
+            >
+              Français
+            </Button>
+            <Button
+              variant={locale === "en" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setLocale("en")}
+            >
+              English
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t.settings.aiTitle}</CardTitle>
           <CardDescription>
-            LLM cloud with PII anonymization
+            {t.settings.aiDesc}
           </CardDescription>
         </CardHeader>
         <CardContent>

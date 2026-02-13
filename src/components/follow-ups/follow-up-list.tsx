@@ -20,11 +20,12 @@ import { useFollowUps } from "@/hooks/use-follow-ups";
 import { MailX } from "lucide-react";
 import { toast } from "sonner";
 import type { FollowUpStatus } from "@prisma/client";
+import { useTranslation } from "@/hooks/use-translation";
 
-const TABS: { value: FollowUpStatus; label: string }[] = [
-  { value: "DRAFT", label: "Brouillons" },
-  { value: "SCHEDULED", label: "Programm\u00e9es" },
-  { value: "SENT", label: "Envoy\u00e9es" },
+const TAB_KEYS: { value: FollowUpStatus; key: "tabDrafts" | "tabScheduled" | "tabSent" }[] = [
+  { value: "DRAFT", key: "tabDrafts" },
+  { value: "SCHEDULED", key: "tabScheduled" },
+  { value: "SENT", key: "tabSent" },
 ];
 
 function FollowUpListSkeleton() {
@@ -51,6 +52,7 @@ function FollowUpListSkeleton() {
 export function FollowUpList() {
   const { followUps, isLoading, fetchFollowUps } = useFollowUps();
   const [activeTab, setActiveTab] = useState<string>("DRAFT");
+  const { t } = useTranslation();
 
   const handleDelete = async (id: string) => {
     try {
@@ -83,18 +85,18 @@ export function FollowUpList() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Mes relances</CardTitle>
+        <CardTitle>{t.followUps.listTitle}</CardTitle>
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
-            {TABS.map((tab) => {
+            {TAB_KEYS.map((tab) => {
               const count = followUps.filter(
                 (fu) => fu.status === tab.value
               ).length;
               return (
                 <TabsTrigger key={tab.value} value={tab.value}>
-                  {tab.label}
+                  {t.followUps[tab.key]}
                   {count > 0 && (
                     <span className="ml-1.5 rounded-full bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
                       {count}
@@ -105,15 +107,15 @@ export function FollowUpList() {
             })}
           </TabsList>
 
-          {TABS.map((tab) => (
+          {TAB_KEYS.map((tab) => (
             <TabsContent key={tab.value} value={tab.value}>
               {isLoading ? (
                 <FollowUpListSkeleton />
               ) : filteredFollowUps.length === 0 ? (
                 <EmptyState
                   icon={MailX}
-                  title="Aucune relance"
-                  description={`Vous n'avez aucune relance dans la cat\u00e9gorie "${tab.label}".`}
+                  title={t.followUps.emptyTitle}
+                  description={t.followUps.emptyDesc}
                 />
               ) : (
                 <div className="space-y-3">

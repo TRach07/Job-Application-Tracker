@@ -33,6 +33,7 @@ import { RefreshCw, Plus, MailCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { KanbanCardSkeleton } from "@/components/shared/loading-skeleton";
+import { useTranslation } from "@/hooks/use-translation";
 
 export function KanbanBoard() {
   const {
@@ -43,6 +44,7 @@ export function KanbanBoard() {
     fetchApplications,
   } = useApplications();
   const { sync, isSyncing } = useEmailSync();
+  const { t } = useTranslation();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isReviewOpen, setIsReviewOpen] = useState(false);
@@ -200,7 +202,7 @@ export function KanbanBoard() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold tracking-tight">Candidatures</h2>
+        <h2 className="text-2xl font-bold tracking-tight">{t.applications.title}</h2>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -208,7 +210,7 @@ export function KanbanBoard() {
             onClick={() => setIsReviewOpen(true)}
           >
             <MailCheck className="h-4 w-4" />
-            Verification
+            {t.applications.verificationButton}
             {pendingReviewCount > 0 && (
               <Badge variant="default" className="ml-1 h-5 px-1.5 text-xs">
                 {pendingReviewCount}
@@ -224,11 +226,11 @@ export function KanbanBoard() {
             <RefreshCw
               className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`}
             />
-            {isSyncing ? "Synchronisation..." : "Sync emails"}
+            {isSyncing ? t.applications.syncingButton : t.applications.syncButton}
           </Button>
           <Button size="sm" onClick={() => setIsFormOpen(true)}>
             <Plus className="h-4 w-4" />
-             Ajouter
+            {t.applications.addButton}
           </Button>
         </div>
       </div>
@@ -259,9 +261,9 @@ export function KanbanBoard() {
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Nouvelle candidature</DialogTitle>
+            <DialogTitle>{t.applications.newApplicationTitle}</DialogTitle>
             <DialogDescription>
-              Remplissez les informations pour ajouter une nouvelle candidature.
+              {t.applications.newApplicationDesc}
             </DialogDescription>
           </DialogHeader>
           <ApplicationForm

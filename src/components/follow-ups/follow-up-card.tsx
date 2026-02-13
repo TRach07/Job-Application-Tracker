@@ -10,8 +10,10 @@ import { Badge } from "@/components/ui/badge";
 import { Copy, Trash2, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { fr } from "date-fns/locale";
 import type { FollowUp, FollowUpStatus } from "@prisma/client";
+import { useTranslation } from "@/hooks/use-translation";
+import { useLocaleDate } from "@/hooks/use-locale-date";
+import type { TranslationDictionary } from "@/i18n/types";
 
 type FollowUpWithApplication = FollowUp & {
   application: {
@@ -26,11 +28,11 @@ interface FollowUpCardProps {
   onDelete?: (id: string) => void;
 }
 
-const STATUS_LABELS: Record<FollowUpStatus, string> = {
-  DRAFT: "Brouillon",
-  SCHEDULED: "Programm\u00e9e",
-  SENT: "Envoy\u00e9e",
-  CANCELLED: "Annul\u00e9e",
+const FOLLOWUP_STATUS_KEYS: Record<FollowUpStatus, keyof TranslationDictionary["followUpStatus"]> = {
+  DRAFT: "draft",
+  SCHEDULED: "scheduled",
+  SENT: "sent",
+  CANCELLED: "cancelled",
 };
 
 const STATUS_STYLES: Record<FollowUpStatus, string> = {
@@ -45,17 +47,20 @@ function truncateText(text: string, maxLength: number): string {
   return text.slice(0, maxLength).trimEnd() + "\u2026";
 }
 
-function getDisplayDate(followUp: FollowUpWithApplication): string {
+function getDisplayDate(followUp: FollowUpWithApplication, t: TranslationDictionary, dateLocale: import("date-fns").Locale): string {
   if (followUp.sentAt) {
-    return `Envoy\u00e9e le ${format(new Date(followUp.sentAt), "dd MMM yyyy", { locale: fr })}`;
+    return `${t.followUps.sentOn} ${format(new Date(followUp.sentAt), "dd MMM yyyy", { locale: dateLocale })}`;
   }
   if (followUp.scheduledAt) {
-    return `Programm\u00e9e le ${format(new Date(followUp.scheduledAt), "dd MMM yyyy", { locale: fr })}`;
+    return `${t.followUps.scheduledOn} ${format(new Date(followUp.scheduledAt), "dd MMM yyyy", { locale: dateLocale })}`;
   }
-  return `Cr\u00e9\u00e9e le ${format(new Date(followUp.createdAt), "dd MMM yyyy", { locale: fr })}`;
+  return `${t.followUps.createdOn} ${format(new Date(followUp.createdAt), "dd MMM yyyy", { locale: dateLocale })}`;
 }
 
 export function FollowUpCard({ followUp, onDelete }: FollowUpCardProps) {
+  const { t } = useTranslation();
+  const { dateLocale } = useLocaleDate();
+
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(followUp.body);
@@ -76,14 +81,14 @@ export function FollowUpCard({ followUp, onDelete }: FollowUpCardProps) {
           <div className="flex items-center gap-2">
             <Mail className="h-4 w-4 text-muted-foreground" />
             <h4 className="text-sm font-semibold text-foreground">
-              {followUp.subject || "Sans objet"}
+              {followUp.subject || t.followUps.noSubject}
             </h4>
           </div>
           <Badge
             variant="secondary"
             className={`shrink-0 ${STATUS_STYLES[followUp.status]}`}
           >
-            {STATUS_LABELS[followUp.status]}
+            {t.followUpStatus[FOLLOWUP_STATUS_KEYS[followUp.status]]}
           </Badge>
         </div>
 
@@ -96,7 +101,7 @@ export function FollowUpCard({ followUp, onDelete }: FollowUpCardProps) {
             {followUp.application.company} &mdash; {followUp.application.position}
           </Badge>
           <span className="text-xs text-muted-foreground">
-            {getDisplayDate(followUp)}
+            {getDisplayDate(followUp, t, dateLocale)}
           </span>
         </div>
       </CardContent>
@@ -104,7 +109,7 @@ export function FollowUpCard({ followUp, onDelete }: FollowUpCardProps) {
       <CardFooter className="gap-2 pt-0">
         <Button variant="outline" size="sm" onClick={handleCopy}>
           <Copy className="mr-2 h-3.5 w-3.5" />
-          Copier
+          {t.followUps.copyButton}
         </Button>
         {onDelete && (
           <Button
@@ -114,7 +119,7 @@ export function FollowUpCard({ followUp, onDelete }: FollowUpCardProps) {
             className="text-destructive hover:bg-destructive/10 hover:text-destructive"
           >
             <Trash2 className="mr-2 h-3.5 w-3.5" />
-            Supprimer
+            {t.followUps.deleteButton}
           </Button>
         )}
       </CardFooter>

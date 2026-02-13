@@ -1,12 +1,17 @@
+"use client";
+
 import { FollowUpList } from "@/components/follow-ups/follow-up-list";
+import { useTranslation } from "@/hooks/use-translation";
 
 export default function FollowUpsPage() {
+  const { t } = useTranslation();
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Relances</h1>
+        <h1 className="text-2xl font-bold">{t.followUps.title}</h1>
         <p className="text-muted-foreground">
-          Gérez vos relances et suivis de candidatures
+          {t.followUps.subtitle}
         </p>
       </div>
 

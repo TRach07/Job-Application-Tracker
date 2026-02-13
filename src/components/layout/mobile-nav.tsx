@@ -11,17 +11,19 @@ import {
   Briefcase,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const navItems = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Candidatures", href: "/applications", icon: Kanban },
-  { label: "Relances", href: "/follow-ups", icon: Bell },
-  { label: "Analytics", href: "/analytics", icon: BarChart3 },
-  { label: "Paramètres", href: "/settings", icon: Settings },
-];
+import { useTranslation } from "@/hooks/use-translation";
 
 export function MobileNav() {
   const pathname = usePathname();
+  const { t } = useTranslation();
+
+  const navItems = [
+    { label: t.nav.dashboard, href: "/dashboard", icon: LayoutDashboard },
+    { label: t.nav.applications, href: "/applications", icon: Kanban },
+    { label: t.nav.followUps, href: "/follow-ups", icon: Bell },
+    { label: t.nav.analytics, href: "/analytics", icon: BarChart3 },
+    { label: t.nav.settings, href: "/settings", icon: Settings },
+  ];
 
   return (
     <div className="flex flex-col h-full bg-card">

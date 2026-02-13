@@ -3,10 +3,11 @@
 import { useDroppable } from "@dnd-kit/core";
 import type { ApplicationStatus } from "@prisma/client";
 import type { ApplicationCard as ApplicationCardType } from "@/types/application";
-import { STATUS_CONFIG } from "@/constants/status";
+import { STATUS_CONFIG, getStatusLabel } from "@/constants/status";
 import { ApplicationCardComponent } from "./application-card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/hooks/use-translation";
 
 interface KanbanColumnProps {
   status: ApplicationStatus;
@@ -17,6 +18,7 @@ export function KanbanColumn({ status, applications }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: status,
   });
+  const { t } = useTranslation();
 
   const config = STATUS_CONFIG[status];
 
@@ -31,7 +33,7 @@ export function KanbanColumn({ status, applications }: KanbanColumnProps) {
       <div className="flex items-center justify-between px-3 py-2 border-b">
         <div className="flex items-center gap-2">
           <div className={cn("h-2.5 w-2.5 rounded-full", config.color)} />
-          <h3 className="text-sm font-semibold">{config.label}</h3>
+          <h3 className="text-sm font-semibold">{getStatusLabel(status, t)}</h3>
         </div>
         <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-xs font-medium">
           {applications.length}
@@ -42,7 +44,7 @@ export function KanbanColumn({ status, applications }: KanbanColumnProps) {
         <div className="flex flex-col gap-2 min-h-[120px]">
           {applications.length === 0 ? (
             <div className="flex items-center justify-center h-[120px] text-xs text-muted-foreground border border-dashed rounded-md">
-              Glissez une candidature ici
+              {t.applications.kanbanEmptyColumn}
             </div>
           ) : (
             applications.map((application) => (

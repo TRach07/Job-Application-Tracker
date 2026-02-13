@@ -9,13 +9,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, Menu } from "lucide-react";
+import { LogOut, Menu, Languages } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { MobileNav } from "./mobile-nav";
+import { useTranslation } from "@/hooks/use-translation";
 
 export function Header() {
   const { data: session } = useSession();
   const user = session?.user;
+  const { t, locale, setLocale } = useTranslation();
+
+  const toggleLocale = () => setLocale(locale === "fr" ? "en" : "fr");
 
   const initials = user?.name
     ? user.name
@@ -40,6 +44,12 @@ export function Header() {
         </Sheet>
       </div>
 
+      <div className="flex items-center gap-2">
+        <Button variant="ghost" size="sm" onClick={toggleLocale} className="gap-1.5">
+          <Languages className="h-4 w-4" />
+          <span className="text-xs font-medium uppercase">{locale}</span>
+        </Button>
+
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="flex items-center gap-2">
@@ -56,10 +66,11 @@ export function Header() {
             className="cursor-pointer"
           >
             <LogOut className="mr-2 h-4 w-4" />
-            Se déconnecter
+            {t.common.signOut}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      </div>
     </header>
   );
 }

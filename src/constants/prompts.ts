@@ -55,7 +55,7 @@ REGLES pour remplir le JSON :
 - NE COPIE PAS d'exemple. Analyse chaque email individuellement.`;
 
 export const FOLLOW_UP_PROMPT = `Tu es un expert en communication professionnelle specialise dans la recherche d'emploi.
-IMPORTANT : Reponds UNIQUEMENT en francais.
+{languageInstruction}
 
 === CONTEXTE ===
 {userName} a postule a une offre d'emploi et souhaite relancer l'entreprise car il/elle n'a pas eu de nouvelles recentes.
@@ -91,7 +91,7 @@ Retourne UNIQUEMENT un JSON valide (pas de texte avant/apres) :
 }`;
 
 export const INSIGHTS_PROMPT = `Tu es un coach en recherche d'emploi. Tu t'adresses directement à {userName}.
-IMPORTANT : Réponds UNIQUEMENT en français.
+{languageInstruction}
 
 Voici les données de candidature de {userName} :
 {analyticsData}

@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import type { ApplicationStatus } from "@prisma/client";
 
-export async function getAnalytics(userId: string) {
+export async function getAnalytics(userId: string, locale: string = "fr") {
   const applications = await prisma.application.findMany({
     where: { userId },
     include: {
@@ -60,7 +60,7 @@ export async function getAnalytics(userId: string) {
     ).length;
 
     timeline.push({
-      week: weekStart.toLocaleDateString("fr-FR", {
+      week: weekStart.toLocaleDateString(locale === "en" ? "en-US" : "fr-FR", {
         day: "numeric",
         month: "short",
       }),

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { z } from "zod";
 import type { ApplicationStatus } from "@prisma/client";
 import type { CreateApplicationInput } from "@/types/application";
-import { STATUS_CONFIG } from "@/constants/status";
+import { STATUS_CONFIG, getStatusLabel } from "@/constants/status";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,34 +16,38 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useTranslation } from "@/hooks/use-translation";
+import type { TranslationDictionary } from "@/i18n/types";
 
-const applicationSchema = z.object({
-  company: z.string().min(1, "Le nom de l'entreprise est requis"),
-  position: z.string().min(1, "Le poste est requis"),
-  url: z.string().url("URL invalide").optional().or(z.literal("")),
-  salary: z.string().optional(),
-  location: z.string().optional(),
-  contactName: z.string().optional(),
-  contactEmail: z
-    .string()
-    .email("Email invalide")
-    .optional()
-    .or(z.literal("")),
-  notes: z.string().optional(),
-  status: z
-    .enum([
-      "APPLIED",
-      "SCREENING",
-      "INTERVIEW",
-      "TECHNICAL",
-      "OFFER",
-      "ACCEPTED",
-      "REJECTED",
-      "WITHDRAWN",
-      "NO_RESPONSE",
-    ])
-    .optional(),
-});
+function createApplicationSchema(t: TranslationDictionary) {
+  return z.object({
+    company: z.string().min(1, t.applications.validationCompanyRequired),
+    position: z.string().min(1, t.applications.validationPositionRequired),
+    url: z.string().url(t.applications.validationUrlInvalid).optional().or(z.literal("")),
+    salary: z.string().optional(),
+    location: z.string().optional(),
+    contactName: z.string().optional(),
+    contactEmail: z
+      .string()
+      .email(t.applications.validationEmailInvalid)
+      .optional()
+      .or(z.literal("")),
+    notes: z.string().optional(),
+    status: z
+      .enum([
+        "APPLIED",
+        "SCREENING",
+        "INTERVIEW",
+        "TECHNICAL",
+        "OFFER",
+        "ACCEPTED",
+        "REJECTED",
+        "WITHDRAWN",
+        "NO_RESPONSE",
+      ])
+      .optional(),
+  });
+}
 
 interface ApplicationFormProps {
   onSubmit: (data: CreateApplicationInput) => Promise<void>;
@@ -53,6 +57,7 @@ interface ApplicationFormProps {
 export function ApplicationForm({ onSubmit, onClose }: ApplicationFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const { t } = useTranslation();
 
   const [formData, setFormData] = useState({
     company: "",
@@ -81,6 +86,7 @@ export function ApplicationForm({ onSubmit, onClose }: ApplicationFormProps) {
     e.preventDefault();
     setErrors({});
 
+    const applicationSchema = createApplicationSchema(t);
     const result = applicationSchema.safeParse(formData);
 
     if (!result.success) {
@@ -114,21 +120,18 @@ export function ApplicationForm({ onSubmit, onClose }: ApplicationFormProps) {
     }
   };
 
-  const allStatuses = Object.entries(STATUS_CONFIG) as [
-    ApplicationStatus,
-    (typeof STATUS_CONFIG)[ApplicationStatus],
-  ][];
+  const allStatuses = Object.keys(STATUS_CONFIG) as ApplicationStatus[];
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="company">
-            Entreprise <span className="text-destructive">*</span>
+            {t.applications.formCompanyLabel} <span className="text-destructive">*</span>
           </Label>
           <Input
             id="company"
-            placeholder="Nom de l'entreprise"
+            placeholder={t.applications.formCompanyPlaceholder}
             value={formData.company}
             onChange={(e) => updateField("company", e.target.value)}
             aria-invalid={!!errors.company}
@@ -140,11 +143,11 @@ export function ApplicationForm({ onSubmit, onClose }: ApplicationFormProps) {
 
         <div className="space-y-2">
           <Label htmlFor="position">
-            Poste <span className="text-destructive">*</span>
+            {t.applications.formPositionLabel} <span className="text-destructive">*</span>
           </Label>
           <Input
             id="position"
-            placeholder="Titre du poste"
+            placeholder={t.applications.formPositionPlaceholder}
             value={formData.position}
             onChange={(e) => updateField("position", e.target.value)}
             aria-invalid={!!errors.position}
@@ -157,7 +160,7 @@ export function ApplicationForm({ onSubmit, onClose }: ApplicationFormProps) {
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="url">URL de l&apos;offre</Label>
+          <Label htmlFor="url">{t.applications.formUrlLabel}</Label>
           <Input
             id="url"
             type="url"
@@ -172,10 +175,10 @@ export function ApplicationForm({ onSubmit, onClose }: ApplicationFormProps) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="salary">Salaire</Label>
+          <Label htmlFor="salary">{t.applications.formSalaryLabel}</Label>
           <Input
             id="salary"
-            placeholder="ex: 45k-55k EUR"
+            placeholder={t.applications.formSalaryPlaceholder}
             value={formData.salary}
             onChange={(e) => updateField("salary", e.target.value)}
           />
@@ -184,28 +187,28 @@ export function ApplicationForm({ onSubmit, onClose }: ApplicationFormProps) {
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="location">Localisation</Label>
+          <Label htmlFor="location">{t.applications.formLocationLabel}</Label>
           <Input
             id="location"
-            placeholder="Ville, Pays ou Remote"
+            placeholder={t.applications.formLocationPlaceholder}
             value={formData.location}
             onChange={(e) => updateField("location", e.target.value)}
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="status">Statut initial</Label>
+          <Label htmlFor="status">{t.applications.formStatusLabel}</Label>
           <Select
             value={formData.status}
             onValueChange={(value) => updateField("status", value)}
           >
             <SelectTrigger id="status" className="w-full">
-              <SelectValue placeholder="Selectionner un statut" />
+              <SelectValue placeholder={t.applications.formStatusPlaceholder} />
             </SelectTrigger>
             <SelectContent>
-              {allStatuses.map(([key, config]) => (
+              {allStatuses.map((key) => (
                 <SelectItem key={key} value={key}>
-                  {config.label}
+                  {getStatusLabel(key, t)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -215,21 +218,21 @@ export function ApplicationForm({ onSubmit, onClose }: ApplicationFormProps) {
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="contactName">Nom du contact</Label>
+          <Label htmlFor="contactName">{t.applications.formContactNameLabel}</Label>
           <Input
             id="contactName"
-            placeholder="Prenom Nom"
+            placeholder={t.applications.formContactNamePlaceholder}
             value={formData.contactName}
             onChange={(e) => updateField("contactName", e.target.value)}
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="contactEmail">Email du contact</Label>
+          <Label htmlFor="contactEmail">{t.applications.formContactEmailLabel}</Label>
           <Input
             id="contactEmail"
             type="email"
-            placeholder="contact@entreprise.com"
+            placeholder={t.applications.formContactEmailPlaceholder}
             value={formData.contactEmail}
             onChange={(e) => updateField("contactEmail", e.target.value)}
             aria-invalid={!!errors.contactEmail}
@@ -241,10 +244,10 @@ export function ApplicationForm({ onSubmit, onClose }: ApplicationFormProps) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="notes">Notes</Label>
+        <Label htmlFor="notes">{t.applications.formNotesLabel}</Label>
         <Textarea
           id="notes"
-          placeholder="Informations supplementaires..."
+          placeholder={t.applications.formNotesPlaceholder}
           value={formData.notes}
           onChange={(e) => updateField("notes", e.target.value)}
           rows={3}
@@ -258,10 +261,10 @@ export function ApplicationForm({ onSubmit, onClose }: ApplicationFormProps) {
           onClick={onClose}
           disabled={isSubmitting}
         >
-          Annuler
+          {t.common.cancel}
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Ajout en cours..." : "Ajouter la candidature"}
+          {isSubmitting ? t.applications.formSubmitting : t.applications.formSubmit}
         </Button>
       </div>
     </form>

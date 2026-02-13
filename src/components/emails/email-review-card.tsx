@@ -24,6 +24,10 @@ import {
 } from "lucide-react";
 import type { EmailReviewItem, EmailReviewAction } from "@/types/email";
 import type { EmailParseResult } from "@/types/email";
+import { useTranslation } from "@/hooks/use-translation";
+import { useLocaleDate } from "@/hooks/use-locale-date";
+import { getStatusLabel } from "@/constants/status";
+import type { ApplicationStatus } from "@prisma/client";
 
 interface EmailReviewCardProps {
   email: EmailReviewItem;
@@ -32,14 +36,9 @@ interface EmailReviewCardProps {
   onOverride?: (emailId: string) => Promise<void>;
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  APPLIED: "Postule",
-  SCREENING: "Preselectio",
-  INTERVIEW: "Entretien",
-  TECHNICAL: "Technique",
-  OFFER: "Offre",
-  REJECTED: "Refuse",
-};
+const REVIEW_STATUSES: ApplicationStatus[] = [
+  "APPLIED", "SCREENING", "INTERVIEW", "TECHNICAL", "OFFER", "REJECTED",
+];
 
 export function EmailReviewCard({
   email,
@@ -52,9 +51,11 @@ export function EmailReviewCard({
   const [editCompany, setEditCompany] = useState("");
   const [editPosition, setEditPosition] = useState("");
   const [editStatus, setEditStatus] = useState("APPLIED");
+  const { t } = useTranslation();
+  const { intlLocale } = useLocaleDate();
 
   const ai = email.aiAnalysis as EmailParseResult | null;
-  const date = new Date(email.receivedAt).toLocaleDateString("fr-FR", {
+  const date = new Date(email.receivedAt).toLocaleDateString(intlLocale, {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -166,7 +167,7 @@ export function EmailReviewCard({
             {ai.status && (
               <div className="flex items-center gap-1.5 text-xs">
                 <Mail className="h-3 w-3 text-primary" />
-                <span>{STATUS_LABELS[ai.status] || ai.status}</span>
+                <span>{getStatusLabel(ai.status as ApplicationStatus, t)}</span>
               </div>
             )}
             {ai.rejection_reason && (
@@ -190,13 +191,13 @@ export function EmailReviewCard({
         {isEditing && (
           <div className="space-y-2 rounded-md border p-2.5">
             <Input
-              placeholder="Entreprise"
+              placeholder={t.emailReview.companyPlaceholder}
               value={editCompany}
               onChange={(e) => setEditCompany(e.target.value)}
               className="h-8 text-xs"
             />
             <Input
-              placeholder="Poste"
+              placeholder={t.emailReview.positionPlaceholder}
               value={editPosition}
               onChange={(e) => setEditPosition(e.target.value)}
               className="h-8 text-xs"
@@ -206,9 +207,9 @@ export function EmailReviewCard({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {Object.entries(STATUS_LABELS).map(([value, label]) => (
-                  <SelectItem key={value} value={value} className="text-xs">
-                    {label}
+                {REVIEW_STATUSES.map((status) => (
+                  <SelectItem key={status} value={status} className="text-xs">
+                    {getStatusLabel(status, t)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -221,7 +222,7 @@ export function EmailReviewCard({
                 disabled={isProcessing}
               >
                 <Check className="h-3 w-3 mr-1" />
-                Confirmer
+                {t.common.confirm}
               </Button>
               <Button
                 size="sm"
@@ -229,7 +230,7 @@ export function EmailReviewCard({
                 className="h-7 text-xs"
                 onClick={() => setIsEditing(false)}
               >
-                Annuler
+                {t.common.cancel}
               </Button>
             </div>
           </div>
@@ -245,7 +246,7 @@ export function EmailReviewCard({
               disabled={isProcessing}
             >
               <Check className="h-3.5 w-3.5 mr-1" />
-              Approuver
+              {t.emailReview.approveButton}
             </Button>
             <div className="flex gap-1.5">
               <Button
@@ -256,7 +257,7 @@ export function EmailReviewCard({
                 disabled={isProcessing}
               >
                 <Pencil className="h-3.5 w-3.5 mr-1" />
-                Modifier
+                {t.emailReview.editButton}
               </Button>
               <Button
                 size="sm"
@@ -266,7 +267,7 @@ export function EmailReviewCard({
                 disabled={isProcessing}
               >
                 <X className="h-3.5 w-3.5 mr-1" />
-                Rejeter
+                {t.emailReview.rejectButton}
               </Button>
             </div>
           </div>
@@ -281,7 +282,7 @@ export function EmailReviewCard({
             onClick={handleOverride}
             disabled={isProcessing}
           >
-            Reprocesser avec l'IA
+            {t.emailReview.reprocessButton}
           </Button>
         )}
       </CardContent>

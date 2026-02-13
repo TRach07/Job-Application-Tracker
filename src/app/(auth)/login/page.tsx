@@ -10,8 +10,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Briefcase, Mail } from "lucide-react";
+import { useTranslation } from "@/hooks/use-translation";
 
 export default function LoginPage() {
+  const { t } = useTranslation();
+
   return (
     <Card className="w-full max-w-md mx-4">
       <CardHeader className="text-center">
@@ -22,8 +25,7 @@ export default function LoginPage() {
         </div>
         <CardTitle className="text-2xl">JobTracker</CardTitle>
         <CardDescription>
-          Connectez-vous avec votre compte Google pour scanner vos emails de
-          candidature et suivre votre pipeline.
+          {t.login.description}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -33,11 +35,10 @@ export default function LoginPage() {
           size="lg"
         >
           <Mail className="mr-2 h-5 w-5" />
-          Se connecter avec Google
+          {t.login.button}
         </Button>
         <p className="text-xs text-muted-foreground text-center mt-4">
-          Nous utilisons l&apos;accès en lecture seule à Gmail pour détecter vos
-          candidatures. Vos données restent locales.
+          {t.login.privacy}
         </p>
       </CardContent>
     </Card>

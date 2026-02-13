@@ -1,8 +1,7 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
-import { fr } from "date-fns/locale/fr";
 import { Briefcase } from "lucide-react";
 import {
   Card,
@@ -14,6 +13,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { EmptyState } from "@/components/shared/empty-state";
 import type { ApplicationStatus } from "@prisma/client";
+import { useTranslation } from "@/hooks/use-translation";
+import { useLocaleDate } from "@/hooks/use-locale-date";
 
 interface RecentApplication {
   id: string;
@@ -49,6 +50,8 @@ function ActivitySkeleton() {
 export function RecentActivity() {
   const [applications, setApplications] = useState<RecentApplication[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { t } = useTranslation();
+  const { dateLocale } = useLocaleDate();
 
   useEffect(() => {
     async function fetchRecent() {
@@ -57,8 +60,6 @@ export function RecentActivity() {
         const json = await res.json();
         if (!res.ok) throw new Error(json.error);
 
-        // The API returns applications ordered by updatedAt desc,
-        // take the first 5 as the most recent activity.
         const recent = (json.data as RecentApplication[]).slice(0, 5);
         setApplications(recent);
       } catch {
@@ -79,15 +80,15 @@ export function RecentActivity() {
     <Card className="bg-zinc-950 border-zinc-800">
       <CardHeader>
         <CardTitle className="text-zinc-50">
-          Activité récente
+          {t.dashboard.recentActivityTitle}
         </CardTitle>
       </CardHeader>
       <CardContent>
         {applications.length === 0 ? (
           <EmptyState
             icon={Briefcase}
-            title="Aucune candidature"
-            description="Commencez par ajouter votre première candidature pour suivre vos démarches."
+            title={t.dashboard.recentActivityEmpty}
+            description={t.dashboard.recentActivityEmptyDesc}
           />
         ) : (
           <div className="space-y-4">
@@ -115,7 +116,7 @@ export function RecentActivity() {
                   <span className="text-xs text-zinc-500 whitespace-nowrap">
                     {formatDistanceToNow(new Date(app.updatedAt), {
                       addSuffix: true,
-                      locale: fr,
+                      locale: dateLocale,
                     })}
                   </span>
                 </div>
