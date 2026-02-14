@@ -6,6 +6,7 @@ import {
   getReviewQueue,
   processReviewAction,
 } from "@/services/email-review.service";
+import { logger } from "@/lib/logger";
 import type { EmailReviewAction } from "@/types/email";
 
 export async function GET() {
@@ -19,6 +20,7 @@ export async function GET() {
     return NextResponse.json({ data: queue });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    logger.error({ msg: "GET /api/emails/review failed", error: message });
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
@@ -50,6 +52,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ data: result });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    logger.error({ msg: "POST /api/emails/review failed", error: message });
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { generateFollowUp } from "@/services/follow-up.service";
 import { rateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 import { z } from "zod";
 
 const generateSchema = z.object({
@@ -32,6 +33,7 @@ export async function POST(request: NextRequest) {
       );
     }
     const message = error instanceof Error ? error.message : "Unknown error";
+    logger.error({ msg: "POST /api/follow-ups/generate failed", error: message });
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

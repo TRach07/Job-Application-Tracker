@@ -7,6 +7,7 @@ import { generateCompletion } from "@/lib/groq";
 import { extractJSON } from "@/lib/ai-utils";
 import { anonymizeInsightsFields, deanonymizeObject } from "@/lib/anonymizer";
 import { rateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 import { INSIGHTS_PROMPT, fillPrompt } from "@/constants/prompts";
 import type { AIInsightsResponse } from "@/types/follow-up";
 
@@ -72,6 +73,7 @@ export async function GET(request: Request) {
         },
       });
     }
+    logger.error({ msg: "GET /api/ai/insights failed", error: message });
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

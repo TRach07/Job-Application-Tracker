@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { logger } from "@/lib/logger";
 
 export async function GET() {
   try {
@@ -25,6 +26,7 @@ export async function GET() {
     return NextResponse.json({ data: emails });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    logger.error({ msg: "GET /api/emails failed", error: message });
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

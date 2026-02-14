@@ -7,6 +7,7 @@ import {
   updateApplication,
   deleteApplication,
 } from "@/services/application.service";
+import { logger } from "@/lib/logger";
 import { z } from "zod";
 
 const updateSchema = z.object({
@@ -55,6 +56,7 @@ export async function GET(
     return NextResponse.json({ data: application });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    logger.error({ msg: "GET /api/applications/[id] failed", error: message });
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
@@ -89,6 +91,7 @@ export async function PATCH(
       );
     }
     const message = error instanceof Error ? error.message : "Unknown error";
+    logger.error({ msg: "PATCH /api/applications/[id] failed", error: message });
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
@@ -109,6 +112,7 @@ export async function DELETE(
     return NextResponse.json({ data: { success: true } });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    logger.error({ msg: "DELETE /api/applications/[id] failed", error: message });
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

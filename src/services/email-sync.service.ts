@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { listMessages, getMessage, GMAIL_JOB_QUERY } from "@/lib/gmail";
 import { preFilterEmail } from "@/lib/email-filter";
+import { logger } from "@/lib/logger";
 
 export async function syncEmails(userId: string) {
   const sync = await prisma.emailSync.create({
@@ -11,7 +12,9 @@ export async function syncEmails(userId: string) {
   });
 
   try {
+    logger.info({ msg: "Starting email sync", userId });
     const messages = await listMessages(userId, GMAIL_JOB_QUERY, 100);
+    logger.info({ msg: "Gmail messages fetched", count: messages.length });
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -67,7 +70,7 @@ export async function syncEmails(userId: string) {
           emailsFiltered++;
         }
       } catch (error) {
-        console.error(`Failed to sync message ${msg.id}:`, error);
+        logger.error({ msg: "Failed to sync message", messageId: msg.id, error });
       }
     }
 
@@ -81,10 +84,12 @@ export async function syncEmails(userId: string) {
       },
     });
 
+    logger.info({ msg: "Email sync completed", emailsFound, emailsFiltered, emailsPassed });
     return { emailsFound, emailsFiltered, emailsPassed };
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
+    logger.error({ msg: "Email sync failed", userId, error: errorMessage });
 
     await prisma.emailSync.update({
       where: { id: sync.id },

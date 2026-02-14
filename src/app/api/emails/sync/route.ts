@@ -4,6 +4,7 @@ import { syncEmails } from "@/services/email-sync.service";
 import { parseUnparsedEmails } from "@/services/email-parser.service";
 import { getPendingReviewCount } from "@/services/email-review.service";
 import { rateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 export async function POST() {
   try {
@@ -41,7 +42,7 @@ export async function POST() {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("[email-sync] Error:", message);
+    logger.error({ msg: "Email sync failed", error: message });
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

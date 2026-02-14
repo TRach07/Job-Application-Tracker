@@ -3,6 +3,7 @@ import { generateCompletion } from "@/lib/groq";
 import { extractJSON } from "@/lib/ai-utils";
 import { anonymizeFollowUpFields, deanonymizeObject } from "@/lib/anonymizer";
 import { FOLLOW_UP_PROMPT, fillPrompt } from "@/constants/prompts";
+import { logger } from "@/lib/logger";
 import type { GeneratedFollowUp } from "@/types/follow-up";
 import { getStatusLabel } from "@/constants/status";
 import { fr } from "@/i18n/fr";
@@ -74,6 +75,7 @@ export async function generateFollowUp(
     languageInstruction: langInstruction,
   });
 
+  logger.info({ msg: "Generating follow-up", applicationId, company: application.company });
   const response = await generateCompletion(prompt);
   const rawParsed = extractJSON<GeneratedFollowUp>(response);
 
@@ -95,6 +97,7 @@ export async function generateFollowUp(
     },
   });
 
+  logger.info({ msg: "Follow-up generated and saved as DRAFT", applicationId });
   return parsed;
 }
 
@@ -154,9 +157,11 @@ export async function matchAndMarkFollowUpAsSent(
     },
   });
 
-  console.log(
-    `[follow-up] Matched DRAFT follow-up ${match.id} as SENT for application ${applicationId}`
-  );
+  logger.info({
+    msg: "Matched DRAFT follow-up as SENT",
+    followUpId: match.id,
+    applicationId,
+  });
 
   return { matched: true, followUpId: match.id };
 }

@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getApplications, createApplication } from "@/services/application.service";
+import { logger } from "@/lib/logger";
 import { z } from "zod";
 
 const createSchema = z.object({
@@ -42,6 +43,7 @@ export async function GET() {
     return NextResponse.json({ data: applications });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    logger.error({ msg: "GET /api/applications failed", error: message });
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
@@ -72,6 +74,7 @@ export async function POST(request: NextRequest) {
       );
     }
     const message = error instanceof Error ? error.message : "Unknown error";
+    logger.error({ msg: "POST /api/applications failed", error: message });
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

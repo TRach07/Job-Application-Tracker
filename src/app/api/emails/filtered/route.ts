@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { getFilteredEmails } from "@/services/email-review.service";
 import { parseEmail } from "@/services/email-parser.service";
 import { prisma } from "@/lib/prisma";
+import { logger } from "@/lib/logger";
 
 export async function GET() {
   try {
@@ -17,6 +18,7 @@ export async function GET() {
     return NextResponse.json({ data: filtered });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    logger.error({ msg: "GET /api/emails/filtered failed", error: message });
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
@@ -63,6 +65,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ data: { success: true } });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    logger.error({ msg: "POST /api/emails/filtered failed", error: message });
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

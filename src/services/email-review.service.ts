@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import type { EmailReviewAction, EmailParseResult } from "@/types/email";
 import type { ApplicationStatus } from "@prisma/client";
 import { matchAndMarkFollowUpAsSent } from "@/services/follow-up.service";
+import { logger } from "@/lib/logger";
 
 /**
  * Get emails awaiting user review.
@@ -68,6 +69,7 @@ export async function processReviewAction(
       where: { id: email.id },
       data: { reviewStatus: "REJECTED", reviewedAt: new Date() },
     });
+    logger.info({ msg: "Email review: rejected", emailId: email.id });
     return { success: true, action: "rejected" as const };
   }
 
@@ -152,6 +154,7 @@ export async function processReviewAction(
       });
     }
 
+    logger.info({ msg: "Email review: linked to existing application", emailId: email.id, applicationId, company: existingApp?.company || company });
     return {
       success: true,
       action: "linked" as const,
@@ -190,6 +193,7 @@ export async function processReviewAction(
       await matchAndMarkFollowUpAsSent(app.id, email.bodyPreview, email.receivedAt);
     }
 
+    logger.info({ msg: "Email review: created new application", emailId: email.id, applicationId: app.id, company, position });
     return {
       success: true,
       action: "created" as const,

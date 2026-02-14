@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { parseEmail } from "@/services/email-parser.service";
 import { rateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 import { z } from "zod";
 
 const parseSchema = z.object({
@@ -31,6 +32,7 @@ export async function POST(request: NextRequest) {
       );
     }
     const message = error instanceof Error ? error.message : "Unknown error";
+    logger.error({ msg: "POST /api/ai/parse-email failed", error: message });
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

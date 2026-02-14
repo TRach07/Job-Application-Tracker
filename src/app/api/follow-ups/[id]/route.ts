@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { logger } from "@/lib/logger";
 
 export async function DELETE(
   _request: NextRequest,
@@ -33,6 +34,7 @@ export async function DELETE(
     return NextResponse.json({ data: { success: true } });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    logger.error({ msg: "DELETE /api/follow-ups/[id] failed", error: message });
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
