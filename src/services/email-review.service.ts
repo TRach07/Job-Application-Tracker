@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import type { EmailReviewAction, EmailParseResult } from "@/types/email";
 import type { ApplicationStatus } from "@prisma/client";
+import { matchAndMarkFollowUpAsSent } from "@/services/follow-up.service";
 
 /**
  * Get emails awaiting user review.
@@ -113,6 +114,11 @@ export async function processReviewAction(
       },
     });
 
+    // Match outbound emails against DRAFT follow-ups
+    if (!email.isInbound) {
+      await matchAndMarkFollowUpAsSent(applicationId, email.bodyPreview, email.receivedAt);
+    }
+
     // Update status if different
     const existingApp = await prisma.application.findUnique({
       where: { id: applicationId },
@@ -178,6 +184,11 @@ export async function processReviewAction(
         reviewedAt: new Date(),
       },
     });
+
+    // Match outbound emails against DRAFT follow-ups
+    if (!email.isInbound) {
+      await matchAndMarkFollowUpAsSent(app.id, email.bodyPreview, email.receivedAt);
+    }
 
     return {
       success: true,

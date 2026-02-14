@@ -4,6 +4,7 @@ import { extractJSON } from "@/lib/ai-utils";
 import { anonymizeEmailFields, deanonymizeObject } from "@/lib/anonymizer";
 import { EMAIL_PARSE_PROMPT, fillPrompt } from "@/constants/prompts";
 import type { EmailParseResult } from "@/types/email";
+import { matchAndMarkFollowUpAsSent } from "@/services/follow-up.service";
 
 const CONFIDENCE_THRESHOLD = 0.85;
 
@@ -62,6 +63,12 @@ export async function parseEmail(emailId: string, userId?: string) {
         ),
       },
     });
+
+    // Match outbound emails against DRAFT follow-ups
+    if (!email.isInbound) {
+      await matchAndMarkFollowUpAsSent(threadMatch.id, email.bodyPreview, email.receivedAt);
+    }
+
     return { auto_linked: true, applicationId: threadMatch.id };
   }
 

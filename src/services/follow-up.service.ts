@@ -98,6 +98,69 @@ export async function generateFollowUp(
   return parsed;
 }
 
+/**
+ * Collapse all whitespace (newlines, tabs, multiple spaces) into single spaces,
+ * lowercase, and trim. This handles formatting differences between the
+ * AI-generated draft and the actually sent email.
+ */
+function normalizeText(text: string): string {
+  return text.replace(/\s+/g, " ").trim().toLowerCase();
+}
+
+/**
+ * When an outbound email is linked to an application, check if it matches
+ * a DRAFT follow-up and mark it as SENT.
+ *
+ * Matching strategy: compare normalized body text. The user may add line breaks,
+ * change casing, or tweak the signature, but the core content stays largely the
+ * same. We check if the email body contains the first 100 characters of the
+ * follow-up body (enough to be unique, tolerant of minor edits at the end).
+ */
+export async function matchAndMarkFollowUpAsSent(
+  applicationId: string,
+  emailBody: string,
+  sentAt: Date
+): Promise<{ matched: boolean; followUpId?: string }> {
+  const drafts = await prisma.followUp.findMany({
+    where: {
+      applicationId,
+      status: "DRAFT",
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  if (drafts.length === 0) {
+    return { matched: false };
+  }
+
+  const normalizedEmailBody = normalizeText(emailBody);
+
+  const match = drafts.find((draft) => {
+    const normalizedDraftBody = normalizeText(draft.body);
+    // Use the first 100 chars of the draft as a fingerprint
+    const snippet = normalizedDraftBody.substring(0, 100);
+    return snippet.length > 20 && normalizedEmailBody.includes(snippet);
+  });
+
+  if (!match) {
+    return { matched: false };
+  }
+
+  await prisma.followUp.update({
+    where: { id: match.id },
+    data: {
+      status: "SENT",
+      sentAt,
+    },
+  });
+
+  console.log(
+    `[follow-up] Matched DRAFT follow-up ${match.id} as SENT for application ${applicationId}`
+  );
+
+  return { matched: true, followUpId: match.id };
+}
+
 export async function getApplicationsNeedingFollowUp(userId: string) {
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
