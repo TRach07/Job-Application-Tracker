@@ -1,4 +1,6 @@
-const GROQ_API_KEY = process.env.GROQ_API_KEY;
+import { env } from "@/lib/env";
+
+const GROQ_API_KEY = env.GROQ_API_KEY;
 const GROQ_MODEL = "llama-3.3-70b-versatile";
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const TIMEOUT_MS = 30000;
@@ -14,10 +16,6 @@ interface GroqResponse {
 }
 
 export async function generateCompletion(prompt: string): Promise<string> {
-  if (!GROQ_API_KEY) {
-    throw new Error("GROQ_API_KEY is not set");
-  }
-
   let lastError: Error | null = null;
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {

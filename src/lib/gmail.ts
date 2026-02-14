@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { env } from "@/lib/env";
 
 const GMAIL_API_BASE = "https://www.googleapis.com/gmail/v1/users/me";
 
@@ -70,8 +71,8 @@ async function refreshAccessToken(userId: string): Promise<string> {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
-      client_id: process.env.GOOGLE_CLIENT_ID!,
-      client_secret: process.env.GOOGLE_CLIENT_SECRET!,
+      client_id: env.GOOGLE_CLIENT_ID,
+      client_secret: env.GOOGLE_CLIENT_SECRET,
       refresh_token: user.refreshToken,
       grant_type: "refresh_token",
     }),
