@@ -20,15 +20,13 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: job-tracker/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
         run: npm ci
-        working-directory: job-tracker
 
       - name: Run ESLint
         run: npm run lint
-        working-directory: job-tracker
 
   typecheck:
     name: Type Check
@@ -40,19 +38,16 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: job-tracker/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
         run: npm ci
-        working-directory: job-tracker
 
       - name: Generate Prisma Client
         run: npx prisma generate
-        working-directory: job-tracker
 
       - name: Run TypeScript compiler
         run: npx tsc --noEmit
-        working-directory: job-tracker
 
   test:
     name: Tests
@@ -64,19 +59,16 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: job-tracker/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
         run: npm ci
-        working-directory: job-tracker
 
       - name: Generate Prisma Client
         run: npx prisma generate
-        working-directory: job-tracker
 
       - name: Run tests
         run: npm test
-        working-directory: job-tracker
 
   build:
     name: Build
@@ -89,19 +81,16 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: job-tracker/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
         run: npm ci
-        working-directory: job-tracker
 
       - name: Generate Prisma Client
         run: npx prisma generate
-        working-directory: job-tracker
 
       - name: Build Next.js
         run: npm run build
-        working-directory: job-tracker
         env:
           # Dummy values for build-time only (env validation is skipped during build via NEXT_PHASE)
           DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
