@@ -17,5 +17,18 @@ services:
       timeout: 5s
       retries: 5
 
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env.local
+    environment:
+      DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/jobtracker"
+      AUTH_TRUST_HOST: "true"
+
 volumes:
   postgres_data:

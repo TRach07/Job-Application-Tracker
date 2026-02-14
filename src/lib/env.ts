@@ -10,7 +10,18 @@ const envSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 });
 
-function validateEnv() {
+type Env = z.infer<typeof envSchema>;
+
+let cached: Env | null = null;
+
+function getEnv(): Env {
+  if (cached) return cached;
+
+  // Skip validation during Next.js build phase (env vars not available in Docker build)
+  if (process.env.NEXT_PHASE === "phase-production-build") {
+    return process.env as unknown as Env;
+  }
+
   const result = envSchema.safeParse(process.env);
 
   if (!result.success) {
@@ -22,7 +33,13 @@ function validateEnv() {
     );
   }
 
-  return result.data;
+  cached = result.data;
+  return cached;
 }
 
-export const env = validateEnv();
+// Lazy proxy: validation only runs on first property access at runtime
+export const env: Env = new Proxy({} as Env, {
+  get(_, prop: string) {
+    return getEnv()[prop as keyof Env];
+  },
+});
