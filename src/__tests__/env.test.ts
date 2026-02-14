@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import { z } from "zod";
 
 // We test the schema logic directly (not the module export, which reads real env)
@@ -36,7 +36,7 @@ describe("env schema validation", () => {
   });
 
   it("rejects missing DATABASE_URL", () => {
-    const { DATABASE_URL, ...rest } = validEnv;
+    const { DATABASE_URL: _, ...rest } = validEnv;
     const result = envSchema.safeParse(rest);
     expect(result.success).toBe(false);
   });
