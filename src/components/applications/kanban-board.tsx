@@ -135,8 +135,10 @@ export function KanbanBoard() {
       }
 
       await fetchApplications();
-    } catch {
-      toast.error("Erreur lors de la synchronisation des emails");
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Erreur lors de la synchronisation";
+      toast.error(message);
     }
   }, [sync, fetchApplications]);
 

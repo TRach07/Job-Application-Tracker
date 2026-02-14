@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { syncEmails } from "@/services/email-sync.service";
 import { parseUnparsedEmails } from "@/services/email-parser.service";
 import { getPendingReviewCount } from "@/services/email-review.service";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST() {
   try {
@@ -10,6 +11,9 @@ export async function POST() {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const limited = rateLimit(`sync:${session.user.id}`, 1, 60_000);
+    if (limited) return limited;
 
     // Step 1: Sync + pre-filter
     const syncResult = await syncEmails(session.user.id);

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { generateFollowUp } from "@/services/follow-up.service";
+import { rateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 
 const generateSchema = z.object({
@@ -14,6 +15,9 @@ export async function POST(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const limited = rateLimit(`follow-up:${session.user.id}`, 5, 60_000);
+    if (limited) return limited;
 
     const body = await request.json();
     const { applicationId, locale } = generateSchema.parse(body);

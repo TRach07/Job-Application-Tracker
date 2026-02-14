@@ -6,6 +6,7 @@ import { getAnalytics } from "@/services/analytics.service";
 import { generateCompletion } from "@/lib/groq";
 import { extractJSON } from "@/lib/ai-utils";
 import { anonymizeInsightsFields, deanonymizeObject } from "@/lib/anonymizer";
+import { rateLimit } from "@/lib/rate-limit";
 import { INSIGHTS_PROMPT, fillPrompt } from "@/constants/prompts";
 import type { AIInsightsResponse } from "@/types/follow-up";
 
@@ -15,6 +16,9 @@ export async function GET(request: Request) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const limited = rateLimit(`ai-insights:${session.user.id}`, 10, 60_000);
+    if (limited) return limited;
 
     const { searchParams } = new URL(request.url);
     const locale = searchParams.get("locale") === "en" ? "en" : "fr";

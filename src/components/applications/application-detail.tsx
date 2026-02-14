@@ -156,8 +156,10 @@ export function ApplicationDetail({ applicationId }: ApplicationDetailProps) {
       if (!res.ok) throw new Error(json.error || "Erreur de generation");
       setGeneratedFollowUp(json.data);
       toast.success("Relance generee avec succes");
-    } catch {
-      toast.error("Erreur lors de la generation de la relance");
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Erreur lors de la generation";
+      toast.error(message);
     } finally {
       setIsGeneratingFollowUp(false);
     }

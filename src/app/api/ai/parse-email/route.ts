@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { parseEmail } from "@/services/email-parser.service";
+import { rateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 
 const parseSchema = z.object({
@@ -13,6 +14,9 @@ export async function POST(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const limited = rateLimit(`ai-parse:${session.user.id}`, 10, 60_000);
+    if (limited) return limited;
 
     const body = await request.json();
     const { emailId } = parseSchema.parse(body);
