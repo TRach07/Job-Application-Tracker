@@ -9,7 +9,6 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { useEmailReview } from "@/hooks/use-email-review";
 import { EmailReviewCard } from "./email-review-card";
@@ -76,7 +75,10 @@ export function EmailReviewPanel({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-2xl p-0 flex flex-col">
+      <SheetContent
+        className="p-0 flex flex-col"
+        style={{ width: "min(100vw, 42rem)", maxWidth: "min(100vw, 42rem)", overflow: "hidden" }}
+      >
         <SheetHeader className="p-6 pb-0">
           <SheetTitle>{t.emailReview.panelTitle}</SheetTitle>
           <SheetDescription>
@@ -110,7 +112,7 @@ export function EmailReviewPanel({
           </TabsList>
 
           <TabsContent value="review" className="flex-1 min-h-0 mt-0">
-            <ScrollArea className="h-full">
+            <div style={{ height: "100%", overflowY: "auto", overflowX: "hidden" }}>
               <div className="p-6 space-y-3">
                 {isLoading ? (
                   <div className="space-y-3">
@@ -139,11 +141,11 @@ export function EmailReviewPanel({
                   ))
                 )}
               </div>
-            </ScrollArea>
+            </div>
           </TabsContent>
 
           <TabsContent value="filtered" className="flex-1 min-h-0 mt-0">
-            <ScrollArea className="h-full">
+            <div style={{ height: "100%", overflowY: "auto", overflowX: "hidden" }}>
               <div className="p-6 space-y-3">
                 {filteredEmails.length === 0 ? (
                   <div className="text-center py-12 text-muted-foreground">
@@ -162,7 +164,7 @@ export function EmailReviewPanel({
                   ))
                 )}
               </div>
-            </ScrollArea>
+            </div>
           </TabsContent>
         </Tabs>
       </SheetContent>

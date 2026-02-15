@@ -40,10 +40,24 @@ function decodeBase64(data: string): string {
   return decoded;
 }
 
+function stripHtml(html: string): string {
+  return html
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&#x27;/gi, "'")
+    .replace(/&#x2F;/gi, "/")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function extractBody(payload: GmailMessage["payload"]): string {
-  if (payload.body?.data) {
-    return decodeBase64(payload.body.data);
-  }
   if (payload.parts) {
     const textPart = payload.parts.find((p) => p.mimeType === "text/plain");
     if (textPart?.body?.data) {
@@ -51,8 +65,15 @@ function extractBody(payload: GmailMessage["payload"]): string {
     }
     const htmlPart = payload.parts.find((p) => p.mimeType === "text/html");
     if (htmlPart?.body?.data) {
-      return decodeBase64(htmlPart.body.data).replace(/<[^>]+>/g, " ");
+      return stripHtml(decodeBase64(htmlPart.body.data));
     }
+  }
+  if (payload.body?.data) {
+    const raw = decodeBase64(payload.body.data);
+    if (raw.includes("<") && raw.includes(">")) {
+      return stripHtml(raw);
+    }
+    return raw;
   }
   return "";
 }

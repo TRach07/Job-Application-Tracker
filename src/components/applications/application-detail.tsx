@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import type { ApplicationStatus } from "@prisma/client";
 import type { ApplicationWithRelations } from "@/types/application";
-import type { GeneratedFollowUp } from "@/types/follow-up";
 import { STATUS_CONFIG, getStatusLabel } from "@/constants/status";
 import { StatusBadge } from "@/components/shared/status-badge";
 import {
@@ -11,7 +10,6 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -32,16 +30,16 @@ import {
   DollarSign,
   User,
   Mail,
-  Clock,
-  Send,
   ArrowLeft,
   Save,
-  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "@/hooks/use-translation";
 import { useLocaleDate } from "@/hooks/use-locale-date";
+import { ApplicationEmails } from "@/components/applications/application-emails";
+import { ApplicationStatusHistory } from "@/components/applications/application-status-history";
+import { ApplicationFollowUp } from "@/components/applications/application-follow-up";
 
 interface ApplicationDetailProps {
   applicationId: string;
@@ -49,7 +47,7 @@ interface ApplicationDetailProps {
 
 export function ApplicationDetail({ applicationId }: ApplicationDetailProps) {
   const router = useRouter();
-  const { t, locale } = useTranslation();
+  const { t } = useTranslation();
   const { intlLocale } = useLocaleDate();
   const [application, setApplication] =
     useState<ApplicationWithRelations | null>(null);
@@ -62,9 +60,6 @@ export function ApplicationDetail({ applicationId }: ApplicationDetailProps) {
   );
   const [isSavingNotes, setIsSavingNotes] = useState(false);
   const [isSavingStatus, setIsSavingStatus] = useState(false);
-  const [isGeneratingFollowUp, setIsGeneratingFollowUp] = useState(false);
-  const [generatedFollowUp, setGeneratedFollowUp] =
-    useState<GeneratedFollowUp | null>(null);
 
   const fetchApplication = useCallback(async () => {
     setIsLoading(true);
@@ -139,29 +134,6 @@ export function ApplicationDetail({ applicationId }: ApplicationDetailProps) {
       toast.error("Erreur lors de la mise a jour du statut");
     } finally {
       setIsSavingStatus(false);
-    }
-  };
-
-  const handleGenerateFollowUp = async () => {
-    if (!application) return;
-    setIsGeneratingFollowUp(true);
-    setGeneratedFollowUp(null);
-    try {
-      const res = await fetch("/api/follow-ups/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ applicationId, locale }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Erreur de generation");
-      setGeneratedFollowUp(json.data);
-      toast.success("Relance generee avec succes");
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Erreur lors de la generation";
-      toast.error(message);
-    } finally {
-      setIsGeneratingFollowUp(false);
     }
   };
 
@@ -335,118 +307,12 @@ export function ApplicationDetail({ applicationId }: ApplicationDetailProps) {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>{t.applicationDetail.followUpTitle}</CardTitle>
-              <CardDescription>{t.applicationDetail.followUpDesc}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Button onClick={handleGenerateFollowUp} disabled={isGeneratingFollowUp} variant="outline">
-                <Sparkles className="h-4 w-4" />
-                {isGeneratingFollowUp ? t.applicationDetail.generating : t.applicationDetail.generateFollowUp}
-              </Button>
-              {generatedFollowUp && (
-                <div className="space-y-3 rounded-lg border p-4 bg-muted/30">
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">{t.applicationDetail.subjectLabel}</p>
-                    <p className="text-sm font-medium">{generatedFollowUp.subject}</p>
-                  </div>
-                  <Separator />
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">{t.applicationDetail.contentLabel}</p>
-                    <p className="text-sm whitespace-pre-wrap">{generatedFollowUp.body}</p>
-                  </div>
-                  <Separator />
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs text-muted-foreground">{t.applicationDetail.toneLabel}</p>
-                      <p className="text-sm capitalize">{generatedFollowUp.tone}</p>
-                    </div>
-                    <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(generatedFollowUp.body); toast.success("Email copie dans le presse-papiers"); }}>
-                      {t.common.copy}
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <ApplicationFollowUp applicationId={applicationId} />
         </div>
 
         <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Send className="h-4 w-4" />
-                {t.applicationDetail.emailsTitle}
-              </CardTitle>
-              <CardDescription>
-                {application.emails.length} {application.emails.length !== 1 ? t.applicationDetail.emailsAssociatedPlural : t.applicationDetail.emailsAssociated}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {application.emails.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">{t.applicationDetail.emailsEmpty}</p>
-              ) : (
-                <div className="space-y-4">
-                  {application.emails.map((email) => {
-                    const emailDate = new Date(email.receivedAt).toLocaleDateString(intlLocale, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
-                    return (
-                      <div key={email.id} className="relative pl-4 border-l-2 border-muted-foreground/20">
-                        <div className="absolute -left-[5px] top-1.5 h-2 w-2 rounded-full bg-primary" />
-                        <div className="space-y-1">
-                          <p className="text-sm font-medium leading-tight">{email.subject}</p>
-                          <p className="text-xs text-muted-foreground">{t.applicationDetail.fromLabel}: {email.from}</p>
-                          <p className="text-xs text-muted-foreground">{emailDate}</p>
-                          {email.bodyPreview && <p className="text-xs text-muted-foreground italic mt-1">{email.bodyPreview}</p>}
-                          {email.aiAnalysis && typeof email.aiAnalysis === "object" && "company" in (email.aiAnalysis as Record<string, unknown>) && (() => {
-                            const analysis = email.aiAnalysis as { company?: string; position?: string; confidence?: number };
-                            return (
-                              <div className="mt-2 p-2 rounded bg-muted/50 text-xs space-y-0.5">
-                                <p className="font-medium text-primary">{t.applicationDetail.aiAnalysisTitle}</p>
-                                {analysis.company && <p>{t.applicationDetail.aiCompany}: {analysis.company}</p>}
-                                {analysis.position && <p>{t.applicationDetail.aiPosition}: {analysis.position}</p>}
-                                {analysis.confidence != null && <p>{t.applicationDetail.aiConfidence}: {Math.round(analysis.confidence * 100)}%</p>}
-                              </div>
-                            );
-                          })()}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                {t.applicationDetail.statusHistoryTitle}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {application.statusHistory.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">{t.applicationDetail.statusHistoryEmpty}</p>
-              ) : (
-                <div className="space-y-3">
-                  {application.statusHistory.map((change) => {
-                    const changeDate = new Date(change.changedAt).toLocaleDateString(intlLocale, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
-                    return (
-                      <div key={change.id} className="flex items-start gap-3 text-sm">
-                        <div className="flex flex-col items-center gap-1">
-                          <StatusBadge status={change.fromStatus} />
-                          <span className="text-xs text-muted-foreground">&darr;</span>
-                          <StatusBadge status={change.toStatus} />
-                        </div>
-                        <p className="text-xs text-muted-foreground pt-1">{changeDate}</p>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <ApplicationEmails emails={application.emails} />
+          <ApplicationStatusHistory statusHistory={application.statusHistory} />
         </div>
       </div>
     </div>

@@ -3,6 +3,21 @@ import { listMessages, getMessage, GMAIL_JOB_QUERY } from "@/lib/gmail";
 import { preFilterEmail } from "@/lib/email-filter";
 import { logger } from "@/lib/logger";
 
+function cleanPreview(text: string): string {
+  return text
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&#x27;/gi, "'")
+    .replace(/&#x2F;/gi, "/")
+    .replace(/\s+/g, " ")
+    .trim()
+    .substring(0, 500);
+}
+
 export async function syncEmails(userId: string) {
   const sync = await prisma.emailSync.create({
     data: {
@@ -37,7 +52,7 @@ export async function syncEmails(userId: string) {
         emailsFound++;
 
         const isInbound = !fullMessage.from.includes(user?.email || "");
-        const bodyPreview = fullMessage.body.substring(0, 500);
+        const bodyPreview = cleanPreview(fullMessage.body);
 
         // Deterministic pre-filter
         const filterResult = preFilterEmail({

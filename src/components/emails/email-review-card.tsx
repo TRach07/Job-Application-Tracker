@@ -118,8 +118,8 @@ export function EmailReviewCard({
   };
 
   return (
-    <Card className="border-l-4 border-l-primary/30">
-      <CardContent className="p-4 space-y-3">
+    <Card className="border-l-4 border-l-primary/30 overflow-hidden max-w-full">
+      <CardContent className="p-4 space-y-3 min-w-0 overflow-hidden">
         {/* Header */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
@@ -145,29 +145,29 @@ export function EmailReviewCard({
         </div>
 
         {/* Body preview */}
-        <p className="text-xs text-muted-foreground line-clamp-2">
+        <p className="text-xs text-muted-foreground line-clamp-2 overflow-hidden" style={{ overflowWrap: "anywhere", wordBreak: "break-all" }}>
           {email.bodyPreview}
         </p>
 
         {/* AI analysis */}
         {ai && !isFiltered && (
-          <div className="rounded-md bg-muted/50 p-2.5 space-y-1.5">
+          <div className="rounded-md bg-muted/50 p-2.5 space-y-1.5 overflow-hidden">
             {ai.company && (
-              <div className="flex items-center gap-1.5 text-xs">
-                <Building2 className="h-3 w-3 text-primary" />
-                <span className="font-medium">{ai.company}</span>
+              <div className="flex items-center gap-1.5 text-xs min-w-0">
+                <Building2 className="h-3 w-3 text-primary shrink-0" />
+                <span className="font-medium truncate">{ai.company}</span>
               </div>
             )}
             {ai.position && (
-              <div className="flex items-center gap-1.5 text-xs">
-                <Briefcase className="h-3 w-3 text-primary" />
-                <span>{ai.position}</span>
+              <div className="flex items-center gap-1.5 text-xs min-w-0">
+                <Briefcase className="h-3 w-3 text-primary shrink-0" />
+                <span className="truncate">{ai.position}</span>
               </div>
             )}
             {ai.status && (
-              <div className="flex items-center gap-1.5 text-xs">
-                <Mail className="h-3 w-3 text-primary" />
-                <span>{getStatusLabel(ai.status as ApplicationStatus, t)}</span>
+              <div className="flex items-center gap-1.5 text-xs min-w-0">
+                <Mail className="h-3 w-3 text-primary shrink-0" />
+                <span className="truncate">{getStatusLabel(ai.status as ApplicationStatus, t)}</span>
               </div>
             )}
             {ai.rejection_reason && (
@@ -181,7 +181,7 @@ export function EmailReviewCard({
         {/* Filter reason */}
         {isFiltered && email.filterReason && (
           <div className="rounded-md bg-orange-50 dark:bg-orange-950/30 p-2.5">
-            <p className="text-xs text-orange-700 dark:text-orange-400">
+            <p className="text-xs text-orange-700 dark:text-orange-400 overflow-hidden" style={{ overflowWrap: "anywhere", wordBreak: "break-all" }}>
               {email.filterReason}
             </p>
           </div>
