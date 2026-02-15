@@ -6,7 +6,9 @@ const envSchema = z.object({
   NEXTAUTH_SECRET: z.string().min(16, "NEXTAUTH_SECRET must be at least 16 characters"),
   GOOGLE_CLIENT_ID: z.string().min(1, "GOOGLE_CLIENT_ID is required"),
   GOOGLE_CLIENT_SECRET: z.string().min(1, "GOOGLE_CLIENT_SECRET is required"),
-  GROQ_API_KEY: z.string().min(1, "GROQ_API_KEY is required"),
+  AI_PROVIDER: z.enum(["groq", "openai", "mistral"]).default("groq"),
+  AI_API_KEY: z.string().min(1, "AI_API_KEY is required"),
+  AI_MODEL: z.string().optional().default(""),
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 });
 

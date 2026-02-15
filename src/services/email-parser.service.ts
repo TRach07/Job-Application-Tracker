@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { generateCompletion } from "@/lib/groq";
+import { generateCompletion } from "@/lib/ai-provider";
 import { extractJSON } from "@/lib/ai-utils";
 import { anonymizeEmailFields, deanonymizeObject } from "@/lib/anonymizer";
 import { EMAIL_PARSE_PROMPT, fillPrompt } from "@/constants/prompts";
@@ -61,7 +61,7 @@ export async function parseEmail(emailId: string, userId: string) {
 
   // Log anonymized data sent to external API (verify no PII leaks)
   logger.info({
-    msg: "Sending anonymized email to Groq",
+    msg: "Sending anonymized email to AI provider",
     subject: email.subject,
     from: anonymized.from,
     to: anonymized.to,
@@ -161,7 +161,7 @@ export async function parseUnparsedEmails(userId: string) {
       results.push({ emailId: email.id, error: message });
       if (message.includes("not found") || message.includes("429")) break;
     }
-    // Rate limit: wait between Groq calls
+    // Rate limit: wait between AI calls
     if (i < unparsed.length - 1) {
       await new Promise((resolve) => setTimeout(resolve, 500));
     }

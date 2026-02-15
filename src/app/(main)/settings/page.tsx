@@ -78,11 +78,11 @@ export default function SettingsPage() {
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Provider</span>
-              <span className="font-mono">Groq API</span>
+              <span className="font-mono">OpenAI-compatible</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Model</span>
-              <span className="font-mono">llama-3.3-70b-versatile</span>
+              <span className="font-mono">Configurable via AI_MODEL</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Privacy</span>

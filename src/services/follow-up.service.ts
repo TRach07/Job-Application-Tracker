@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { generateCompletion } from "@/lib/groq";
+import { generateCompletion } from "@/lib/ai-provider";
 import { extractJSON } from "@/lib/ai-utils";
 import { anonymizeFollowUpFields, deanonymizeObject } from "@/lib/anonymizer";
 import { FOLLOW_UP_PROMPT, fillPrompt } from "@/constants/prompts";

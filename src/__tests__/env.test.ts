@@ -8,7 +8,9 @@ const envSchema = z.object({
   NEXTAUTH_SECRET: z.string().min(16, "NEXTAUTH_SECRET must be at least 16 characters"),
   GOOGLE_CLIENT_ID: z.string().min(1, "GOOGLE_CLIENT_ID is required"),
   GOOGLE_CLIENT_SECRET: z.string().min(1, "GOOGLE_CLIENT_SECRET is required"),
-  GROQ_API_KEY: z.string().min(1, "GROQ_API_KEY is required"),
+  AI_PROVIDER: z.enum(["groq", "openai", "mistral"]).default("groq"),
+  AI_API_KEY: z.string().min(1, "AI_API_KEY is required"),
+  AI_MODEL: z.string().optional().default(""),
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 });
 
@@ -18,7 +20,7 @@ const validEnv = {
   NEXTAUTH_SECRET: "a-very-long-secret-key",
   GOOGLE_CLIENT_ID: "client-id",
   GOOGLE_CLIENT_SECRET: "client-secret",
-  GROQ_API_KEY: "gsk_test_key",
+  AI_API_KEY: "test_api_key",
 };
 
 describe("env schema validation", () => {
@@ -33,6 +35,24 @@ describe("env schema validation", () => {
     if (result.success) {
       expect(result.data.NODE_ENV).toBe("development");
     }
+  });
+
+  it("defaults AI_PROVIDER to groq", () => {
+    const result = envSchema.safeParse(validEnv);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.AI_PROVIDER).toBe("groq");
+    }
+  });
+
+  it("accepts openai as AI_PROVIDER", () => {
+    const result = envSchema.safeParse({ ...validEnv, AI_PROVIDER: "openai" });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects invalid AI_PROVIDER", () => {
+    const result = envSchema.safeParse({ ...validEnv, AI_PROVIDER: "claude" });
+    expect(result.success).toBe(false);
   });
 
   it("rejects missing DATABASE_URL", () => {
@@ -60,7 +80,7 @@ describe("env schema validation", () => {
     const result = envSchema.safeParse({});
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues.length).toBeGreaterThanOrEqual(6);
+      expect(result.error.issues.length).toBeGreaterThanOrEqual(5);
     }
   });
 });

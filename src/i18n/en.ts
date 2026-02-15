@@ -174,7 +174,7 @@ export const en: TranslationDictionary = {
     profileTitle: "Profile",
     profileDesc: "Your Google account information",
     gmailConnected: "Gmail connected",
-    aiTitle: "AI (Groq)",
+    aiTitle: "AI",
     aiDesc: "LLM cloud with PII anonymization",
     languageTitle: "Language",
     languageDesc: "Choose the interface language",
