@@ -23,6 +23,17 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   Building,
   MapPin,
   Calendar,
@@ -32,6 +43,7 @@ import {
   Mail,
   ArrowLeft,
   Save,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -60,6 +72,7 @@ export function ApplicationDetail({ applicationId }: ApplicationDetailProps) {
   );
   const [isSavingNotes, setIsSavingNotes] = useState(false);
   const [isSavingStatus, setIsSavingStatus] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchApplication = useCallback(async () => {
     setIsLoading(true);
@@ -137,6 +150,21 @@ export function ApplicationDetail({ applicationId }: ApplicationDetailProps) {
     }
   };
 
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/applications/${applicationId}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error();
+      toast.success(t.applicationDetail.deleteSuccess);
+      router.push("/applications");
+    } catch {
+      toast.error(t.applicationDetail.deleteError);
+      setIsDeleting(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -192,7 +220,29 @@ export function ApplicationDetail({ applicationId }: ApplicationDetailProps) {
             <p className="text-muted-foreground">{application.position}</p>
           </div>
         </div>
-        <StatusBadge status={application.status} className="text-sm" />
+        <div className="flex items-center gap-3">
+          <StatusBadge status={application.status} className="text-sm" />
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30">
+                <Trash2 className="h-4 w-4" />
+                {t.common.delete}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{t.applicationDetail.deleteConfirmTitle}</AlertDialogTitle>
+                <AlertDialogDescription>{t.applicationDetail.deleteConfirmDesc}</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>{t.common.cancel}</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  {t.common.delete}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </div>
 
       <Separator />

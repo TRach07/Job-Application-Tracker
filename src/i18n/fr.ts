@@ -138,6 +138,11 @@ export const fr: TranslationDictionary = {
     statusHistoryTitle: "Historique des statuts",
     statusHistoryEmpty: "Aucun changement de statut enregistr\u00e9.",
     fromLabel: "De",
+    deleteButton: "Supprimer cette candidature",
+    deleteConfirmTitle: "Supprimer la candidature",
+    deleteConfirmDesc: "Cette action est irr\u00e9versible. Tous les emails et donn\u00e9es associ\u00e9s seront supprim\u00e9s.",
+    deleteSuccess: "Candidature supprim\u00e9e",
+    deleteError: "Erreur lors de la suppression",
   },
   analytics: {
     subtitle: "Statistiques et insights sur vos candidatures",

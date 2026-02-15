@@ -137,6 +137,11 @@ export interface TranslationDictionary {
     statusHistoryTitle: string;
     statusHistoryEmpty: string;
     fromLabel: string;
+    deleteButton: string;
+    deleteConfirmTitle: string;
+    deleteConfirmDesc: string;
+    deleteSuccess: string;
+    deleteError: string;
   };
   analytics: {
     subtitle: string;

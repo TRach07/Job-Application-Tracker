@@ -138,6 +138,11 @@ export const en: TranslationDictionary = {
     statusHistoryTitle: "Status history",
     statusHistoryEmpty: "No status changes recorded.",
     fromLabel: "From",
+    deleteButton: "Delete this application",
+    deleteConfirmTitle: "Delete application",
+    deleteConfirmDesc: "This action cannot be undone. All associated emails and data will be deleted.",
+    deleteSuccess: "Application deleted",
+    deleteError: "Error deleting application",
   },
   analytics: {
     subtitle: "Statistics and insights on your applications",
