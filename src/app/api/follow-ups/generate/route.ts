@@ -1,8 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/api-handler";
 import { generateFollowUp } from "@/services/follow-up.service";
 import { rateLimit } from "@/lib/rate-limit";
-import { logger } from "@/lib/logger";
 import { z } from "zod";
 
 const generateSchema = z.object({
@@ -10,30 +9,13 @@ const generateSchema = z.object({
   locale: z.enum(["fr", "en"]).optional().default("fr"),
 });
 
-export async function POST(request: NextRequest) {
-  try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const POST = withAuth(async (req, { userId }) => {
+  const limited = rateLimit(`follow-up:${userId}`, 5, 60_000);
+  if (limited) return limited;
 
-    const limited = rateLimit(`follow-up:${session.user.id}`, 5, 60_000);
-    if (limited) return limited;
+  const body = await req.json();
+  const { applicationId, locale } = generateSchema.parse(body);
 
-    const body = await request.json();
-    const { applicationId, locale } = generateSchema.parse(body);
-
-    const followUp = await generateFollowUp(applicationId, locale);
-    return NextResponse.json({ data: followUp });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Validation error", details: error.issues },
-        { status: 400 }
-      );
-    }
-    const message = error instanceof Error ? error.message : "Unknown error";
-    logger.error({ msg: "POST /api/follow-ups/generate failed", error: message });
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
-}
+  const followUp = await generateFollowUp(applicationId, locale);
+  return NextResponse.json({ data: followUp });
+}, { route: "POST /api/follow-ups/generate" });

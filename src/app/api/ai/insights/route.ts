@@ -1,65 +1,64 @@
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { withAuth } from "@/lib/api-handler";
 import { getAnalytics } from "@/services/analytics.service";
 import { generateCompletion } from "@/lib/groq";
 import { extractJSON } from "@/lib/ai-utils";
 import { anonymizeInsightsFields, deanonymizeObject } from "@/lib/anonymizer";
 import { rateLimit } from "@/lib/rate-limit";
-import { logger } from "@/lib/logger";
 import { INSIGHTS_PROMPT, fillPrompt } from "@/constants/prompts";
 import type { AIInsightsResponse } from "@/types/follow-up";
 
-export async function GET(request: Request) {
-  try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+function isGroqUnavailable(error: unknown): boolean {
+  const msg = error instanceof Error ? error.message : "";
+  return msg.includes("fetch failed")
+    || msg.includes("GROQ_API_KEY")
+    || msg.includes("Groq failed")
+    || msg.includes("Groq API error");
+}
 
-    const limited = rateLimit(`ai-insights:${session.user.id}`, 10, 60_000);
-    if (limited) return limited;
+export const GET = withAuth(async (req, { userId, userName }) => {
+  const limited = rateLimit(`ai-insights:${userId}`, 10, 60_000);
+  if (limited) return limited;
 
-    const { searchParams } = new URL(request.url);
-    const locale = searchParams.get("locale") === "en" ? "en" : "fr";
+  const { searchParams } = new URL(req.url);
+  const locale = searchParams.get("locale") === "en" ? "en" : "fr";
 
-    const analytics = await getAnalytics(session.user.id, locale);
+  const analytics = await getAnalytics(userId, locale);
 
-    const defaultUser = locale === "en" ? "the user" : "l'utilisateur";
-    const langInstruction = locale === "en"
-      ? "IMPORTANT: Respond ONLY in English."
-      : "IMPORTANT : Réponds UNIQUEMENT en français.";
+  const defaultUser = locale === "en" ? "the user" : "l'utilisateur";
+  const langInstruction = locale === "en"
+    ? "IMPORTANT: Respond ONLY in English."
+    : "IMPORTANT : Réponds UNIQUEMENT en français.";
 
-    // Anonymize user name before sending to external AI
-    const anonymized = anonymizeInsightsFields({
-      userName: session.user.name || defaultUser,
-    });
+  const anonymized = anonymizeInsightsFields({
+    userName: userName || defaultUser,
+  });
 
-    const prompt = fillPrompt(INSIGHTS_PROMPT, {
-      userName: anonymized.userName,
-      analyticsData: JSON.stringify(analytics, null, 2),
-      languageInstruction: langInstruction,
-    });
+  const prompt = fillPrompt(INSIGHTS_PROMPT, {
+    userName: anonymized.userName,
+    analyticsData: JSON.stringify(analytics, null, 2),
+    languageInstruction: langInstruction,
+  });
 
-    const response = await generateCompletion(prompt);
-    const rawInsights = extractJSON<AIInsightsResponse>(response);
+  const response = await generateCompletion(prompt);
+  const rawInsights = extractJSON<AIInsightsResponse>(response);
 
-    if (!rawInsights) {
-      return NextResponse.json(
-        { error: "Failed to generate insights" },
-        { status: 500 }
-      );
-    }
+  if (!rawInsights) {
+    return NextResponse.json(
+      { error: "Failed to generate insights" },
+      { status: 500 }
+    );
+  }
 
-    // De-anonymize to restore real user name
-    const insights = deanonymizeObject(rawInsights, anonymized.mapping);
+  const insights = deanonymizeObject(rawInsights, anonymized.mapping);
 
-    return NextResponse.json({ data: insights });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    // If Groq API is unavailable, return a graceful fallback
-    if (message.includes("fetch failed") || message.includes("GROQ_API_KEY") || message.includes("Groq failed") || message.includes("Groq API error")) {
+  return NextResponse.json({ data: insights });
+}, {
+  route: "GET /api/ai/insights",
+  onError: (error) => {
+    if (isGroqUnavailable(error)) {
       return NextResponse.json({
         data: {
           insights: [
@@ -73,7 +72,6 @@ export async function GET(request: Request) {
         },
       });
     }
-    logger.error({ msg: "GET /api/ai/insights failed", error: message });
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
-}
+    return null;
+  },
+});

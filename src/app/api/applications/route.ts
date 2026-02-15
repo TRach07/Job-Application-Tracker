@@ -1,9 +1,8 @@
 export const dynamic = "force-dynamic";
 
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/api-handler";
 import { getApplications, createApplication } from "@/services/application.service";
-import { logger } from "@/lib/logger";
 import { z } from "zod";
 
 const createSchema = z.object({
@@ -32,49 +31,21 @@ const createSchema = z.object({
   source: z.enum(["MANUAL", "EMAIL_DETECTED"]).optional(),
 });
 
-export async function GET() {
-  try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const GET = withAuth(async (_req, { userId }) => {
+  const applications = await getApplications(userId);
+  return NextResponse.json({ data: applications });
+}, { route: "GET /api/applications" });
 
-    const applications = await getApplications(session.user.id);
-    return NextResponse.json({ data: applications });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    logger.error({ msg: "GET /api/applications failed", error: message });
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
-}
+export const POST = withAuth(async (req, { userId }) => {
+  const body = await req.json();
+  const validated = createSchema.parse(body);
 
-export async function POST(request: NextRequest) {
-  try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  const application = await createApplication(userId, {
+    ...validated,
+    appliedAt: validated.appliedAt ? new Date(validated.appliedAt) : undefined,
+    url: validated.url || undefined,
+    contactEmail: validated.contactEmail || undefined,
+  });
 
-    const body = await request.json();
-    const validated = createSchema.parse(body);
-
-    const application = await createApplication(session.user.id, {
-      ...validated,
-      appliedAt: validated.appliedAt ? new Date(validated.appliedAt) : undefined,
-      url: validated.url || undefined,
-      contactEmail: validated.contactEmail || undefined,
-    });
-
-    return NextResponse.json({ data: application }, { status: 201 });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Validation error", details: error.issues },
-        { status: 400 }
-      );
-    }
-    const message = error instanceof Error ? error.message : "Unknown error";
-    logger.error({ msg: "POST /api/applications failed", error: message });
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
-}
+  return NextResponse.json({ data: application }, { status: 201 });
+}, { route: "POST /api/applications" });

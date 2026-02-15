@@ -1,13 +1,12 @@
 export const dynamic = "force-dynamic";
 
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/api-handler";
 import {
   getApplicationById,
   updateApplication,
   deleteApplication,
 } from "@/services/application.service";
-import { logger } from "@/lib/logger";
 import { z } from "zod";
 
 const updateSchema = z.object({
@@ -36,83 +35,35 @@ const updateSchema = z.object({
   nextActionAt: z.string().datetime().optional(),
 });
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const GET = withAuth(async (_req, { userId, params }) => {
+  const { id } = params;
+  const application = await getApplicationById(id, userId);
 
-    const { id } = await params;
-    const application = await getApplicationById(id, session.user.id);
-
-    if (!application) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
-
-    return NextResponse.json({ data: application });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    logger.error({ msg: "GET /api/applications/[id] failed", error: message });
-    return NextResponse.json({ error: message }, { status: 500 });
+  if (!application) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
-}
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  return NextResponse.json({ data: application });
+}, { route: "GET /api/applications/[id]" });
 
-    const { id } = await params;
-    const body = await request.json();
-    const validated = updateSchema.parse(body);
+export const PATCH = withAuth(async (req, { userId, params }) => {
+  const { id } = params;
+  const body = await req.json();
+  const validated = updateSchema.parse(body);
 
-    const application = await updateApplication(id, session.user.id, {
-      ...validated,
-      nextActionAt: validated.nextActionAt
-        ? new Date(validated.nextActionAt)
-        : undefined,
-    });
+  const application = await updateApplication(id, userId, {
+    ...validated,
+    nextActionAt: validated.nextActionAt
+      ? new Date(validated.nextActionAt)
+      : undefined,
+  });
 
-    return NextResponse.json({ data: application });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Validation error", details: error.issues },
-        { status: 400 }
-      );
-    }
-    const message = error instanceof Error ? error.message : "Unknown error";
-    logger.error({ msg: "PATCH /api/applications/[id] failed", error: message });
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
-}
+  return NextResponse.json({ data: application });
+}, { route: "PATCH /api/applications/[id]" });
 
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const DELETE = withAuth(async (_req, { userId, params }) => {
+  const { id } = params;
+  await deleteApplication(id, userId);
 
-    const { id } = await params;
-    await deleteApplication(id, session.user.id);
-
-    return NextResponse.json({ data: { success: true } });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    logger.error({ msg: "DELETE /api/applications/[id] failed", error: message });
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
-}
+  return NextResponse.json({ data: { success: true } });
+}, { route: "DELETE /api/applications/[id]" });

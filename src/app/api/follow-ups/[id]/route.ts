@@ -1,40 +1,24 @@
 export const dynamic = "force-dynamic";
 
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/lib/api-handler";
 import { prisma } from "@/lib/prisma";
-import { logger } from "@/lib/logger";
 
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+export const DELETE = withAuth(async (_req, { userId, params }) => {
+  const { id } = params;
 
-    const { id } = await params;
+  const followUp = await prisma.followUp.findFirst({
+    where: {
+      id,
+      application: { userId },
+    },
+  });
 
-    // Verify the follow-up belongs to the user
-    const followUp = await prisma.followUp.findFirst({
-      where: {
-        id,
-        application: { userId: session.user.id },
-      },
-    });
-
-    if (!followUp) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
-
-    await prisma.followUp.delete({ where: { id } });
-
-    return NextResponse.json({ data: { success: true } });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    logger.error({ msg: "DELETE /api/follow-ups/[id] failed", error: message });
-    return NextResponse.json({ error: message }, { status: 500 });
+  if (!followUp) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
-}
+
+  await prisma.followUp.delete({ where: { id } });
+
+  return NextResponse.json({ data: { success: true } });
+}, { route: "DELETE /api/follow-ups/[id]" });
