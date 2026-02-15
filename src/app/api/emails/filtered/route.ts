@@ -1,11 +1,16 @@
 export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { getFilteredEmails } from "@/services/email-review.service";
 import { parseEmail } from "@/services/email-parser.service";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
+
+const overrideSchema = z.object({
+  emailId: z.string().min(1, "emailId is required"),
+});
 
 export async function GET() {
   try {
@@ -31,14 +36,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { emailId } = (await request.json()) as { emailId: string };
-
-    if (!emailId) {
+    const body = await request.json();
+    const parsed = overrideSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "emailId is required" },
+        { error: parsed.error.issues[0].message },
         { status: 400 }
       );
     }
+    const { emailId } = parsed.data;
 
     // Verify email belongs to user
     const email = await prisma.email.findFirst({

@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import type { EmailReviewAction, EmailParseResult } from "@/types/email";
 import type { ApplicationStatus } from "@prisma/client";
 import { matchAndMarkFollowUpAsSent } from "@/services/follow-up.service";
+import { findApplicationByThread } from "@/services/application.service";
 import { logger } from "@/lib/logger";
 
 /**
@@ -213,26 +214,6 @@ export async function getPendingReviewCount(userId: string): Promise<number> {
 }
 
 // --- Deduplication helpers ---
-
-async function findApplicationByThread(
-  threadId: string | null,
-  userId: string
-): Promise<{ id: string; company: string } | null> {
-  if (!threadId) return null;
-
-  const linkedEmail = await prisma.email.findFirst({
-    where: {
-      threadId,
-      applicationId: { not: null },
-      application: { userId },
-    },
-    include: {
-      application: { select: { id: true, company: true } },
-    },
-  });
-
-  return linkedEmail?.application ?? null;
-}
 
 async function findApplicationByDomain(
   fromHeader: string,

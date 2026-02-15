@@ -1,13 +1,22 @@
 export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { auth } from "@/lib/auth";
 import {
   getReviewQueue,
   processReviewAction,
 } from "@/services/email-review.service";
 import { logger } from "@/lib/logger";
-import type { EmailReviewAction } from "@/types/email";
+
+const reviewActionSchema = z.object({
+  emailId: z.string().min(1, "emailId is required"),
+  action: z.enum(["approve", "reject", "edit_approve"]),
+  editedCompany: z.string().optional(),
+  editedPosition: z.string().optional(),
+  editedStatus: z.string().optional(),
+  linkToApplicationId: z.string().optional(),
+});
 
 export async function GET() {
   try {
@@ -32,23 +41,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = (await request.json()) as EmailReviewAction;
-
-    if (!body.emailId || !body.action) {
+    const raw = await request.json();
+    const parsed = reviewActionSchema.safeParse(raw);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "emailId and action are required" },
+        { error: parsed.error.issues[0].message },
         { status: 400 }
       );
     }
 
-    if (!["approve", "reject", "edit_approve"].includes(body.action)) {
-      return NextResponse.json(
-        { error: "action must be approve, reject, or edit_approve" },
-        { status: 400 }
-      );
-    }
-
-    const result = await processReviewAction(session.user.id, body);
+    const result = await processReviewAction(session.user.id, parsed.data);
     return NextResponse.json({ data: result });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";

@@ -5,40 +5,17 @@ import { anonymizeEmailFields, deanonymizeObject } from "@/lib/anonymizer";
 import { EMAIL_PARSE_PROMPT, fillPrompt } from "@/constants/prompts";
 import type { EmailParseResult } from "@/types/email";
 import { matchAndMarkFollowUpAsSent } from "@/services/follow-up.service";
+import { findApplicationByThread } from "@/services/application.service";
 import { logger } from "@/lib/logger";
 
 const CONFIDENCE_THRESHOLD = 0.85;
-
-/**
- * Find an existing application linked to the same Gmail thread.
- * If an email in the same thread is already linked to an Application, auto-link.
- */
-async function findApplicationByThread(
-  threadId: string | null,
-  userId?: string
-): Promise<{ id: string; company: string } | null> {
-  if (!threadId || !userId) return null;
-
-  const linkedEmail = await prisma.email.findFirst({
-    where: {
-      threadId,
-      applicationId: { not: null },
-      application: { userId },
-    },
-    include: {
-      application: { select: { id: true, company: true } },
-    },
-  });
-
-  return linkedEmail?.application ?? null;
-}
 
 /**
  * Parse a single email with AI.
  * NEVER auto-creates an Application.
  * Marks the email as PENDING (awaiting review) or SKIPPED (not job-related).
  */
-export async function parseEmail(emailId: string, userId?: string) {
+export async function parseEmail(emailId: string, userId: string) {
   const email = await prisma.email.findUnique({
     where: { id: emailId },
   });
