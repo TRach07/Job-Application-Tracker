@@ -102,6 +102,13 @@ export const en: TranslationDictionary = {
     validationPositionRequired: "Position is required",
     validationUrlInvalid: "Invalid URL",
     validationEmailInvalid: "Invalid email",
+    searchPlaceholder: "Search company or position...",
+    filterByStatus: "Filter by status",
+    allStatuses: "All statuses",
+    clearFilters: "Clear",
+    noResults: "No results",
+    noResultsDesc: "No applications match your search criteria.",
+    showArchived: "Show archived",
   },
   applicationDetail: {
     backButton: "Back",

@@ -102,6 +102,13 @@ export interface TranslationDictionary {
     validationPositionRequired: string;
     validationUrlInvalid: string;
     validationEmailInvalid: string;
+    searchPlaceholder: string;
+    filterByStatus: string;
+    allStatuses: string;
+    clearFilters: string;
+    noResults: string;
+    noResultsDesc: string;
+    showArchived: string;
   };
   applicationDetail: {
     backButton: string;

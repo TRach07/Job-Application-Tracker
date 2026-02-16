@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import {
   DndContext,
   closestCorners,
@@ -13,7 +13,7 @@ import {
 } from "@dnd-kit/core";
 import { useApplications } from "@/hooks/use-applications";
 import { useEmailSync } from "@/hooks/use-email-sync";
-import { KANBAN_COLUMNS } from "@/constants/status";
+import { KANBAN_COLUMNS, ARCHIVE_STATUSES } from "@/constants/status";
 import type { ApplicationStatus } from "@prisma/client";
 import type { ApplicationCard as ApplicationCardType } from "@/types/application";
 import type { CreateApplicationInput } from "@/types/application";
@@ -22,6 +22,7 @@ import { ApplicationCardComponent } from "./application-card";
 import { ApplicationForm } from "./application-form";
 import { EmailReviewPanel } from "@/components/emails/email-review-panel";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -29,7 +30,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { RefreshCw, Plus, MailCheck } from "lucide-react";
+import { RefreshCw, Plus, MailCheck, Search, X, Archive } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { KanbanCardSkeleton } from "@/components/shared/loading-skeleton";
@@ -53,6 +54,10 @@ export function KanbanBoard() {
     null
   );
 
+  // Search and filter state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showArchived, setShowArchived] = useState(false);
+
   // Fetch pending review count on mount
   useEffect(() => {
     fetch("/api/emails/review")
@@ -70,6 +75,21 @@ export function KanbanBoard() {
       },
     })
   );
+
+  // Filter applications based on search query
+  const filteredApplications = useMemo(() => {
+    if (!searchQuery.trim()) return applications;
+
+    const query = searchQuery.toLowerCase();
+    return applications.filter(
+      (app) =>
+        app.company.toLowerCase().includes(query) ||
+        app.position.toLowerCase().includes(query) ||
+        (app.location && app.location.toLowerCase().includes(query))
+    );
+  }, [applications, searchQuery]);
+
+  const hasActiveFilters = searchQuery.trim().length > 0;
 
   const handleDragStart = useCallback(
     (event: DragStartEvent) => {
@@ -159,7 +179,6 @@ export function KanbanBoard() {
     (open: boolean) => {
       setIsReviewOpen(open);
       if (!open) {
-        // Refresh pending count when panel closes
         fetch("/api/emails/review")
           .then((res) => res.json())
           .then((json) => {
@@ -173,9 +192,22 @@ export function KanbanBoard() {
 
   const getApplicationsForColumn = useCallback(
     (status: ApplicationStatus) => {
-      return applications.filter((app) => app.status === status);
+      return filteredApplications.filter((app) => app.status === status);
     },
-    [applications]
+    [filteredApplications]
+  );
+
+  const columnsToShow = showArchived
+    ? [...KANBAN_COLUMNS, ...ARCHIVE_STATUSES]
+    : KANBAN_COLUMNS;
+
+  // Count archived applications
+  const archivedCount = useMemo(
+    () =>
+      filteredApplications.filter((app) =>
+        ARCHIVE_STATUSES.includes(app.status)
+      ).length,
+    [filteredApplications]
   );
 
   if (isLoading) {
@@ -203,8 +235,7 @@ export function KanbanBoard() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold tracking-tight">{t.applications.title}</h2>
+      <div className="flex items-center justify-end">
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -237,28 +268,95 @@ export function KanbanBoard() {
         </div>
       </div>
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCorners}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-      >
-        <div className="grid grid-cols-5 gap-4 min-h-[calc(100vh-12rem)]">
-          {KANBAN_COLUMNS.map((status) => (
-            <KanbanColumn
-              key={status}
-              status={status}
-              applications={getApplicationsForColumn(status)}
-            />
-          ))}
+      {/* Search bar and filters */}
+      <div className="flex items-center gap-3">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder={t.applications.searchPlaceholder}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 h-9"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
 
-        <DragOverlay>
-          {activeCard ? (
-            <ApplicationCardComponent application={activeCard} isOverlay />
-          ) : null}
-        </DragOverlay>
-      </DndContext>
+        <Button
+          variant={showArchived ? "secondary" : "outline"}
+          size="sm"
+          onClick={() => setShowArchived(!showArchived)}
+          className="shrink-0"
+        >
+          <Archive className="h-4 w-4" />
+          {t.applications.showArchived}
+          {archivedCount > 0 && (
+            <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+              {archivedCount}
+            </Badge>
+          )}
+        </Button>
+
+        {hasActiveFilters && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSearchQuery("")}
+            className="shrink-0 text-muted-foreground"
+          >
+            <X className="h-4 w-4" />
+            {t.applications.clearFilters}
+          </Button>
+        )}
+      </div>
+
+      {/* No results message */}
+      {hasActiveFilters && filteredApplications.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <Search className="h-10 w-10 text-muted-foreground mb-3" />
+          <h3 className="font-semibold">{t.applications.noResults}</h3>
+          <p className="text-sm text-muted-foreground mt-1">
+            {t.applications.noResultsDesc}
+          </p>
+        </div>
+      )}
+
+      {/* Kanban board */}
+      {(!hasActiveFilters || filteredApplications.length > 0) && (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <div
+            className="grid gap-4 min-h-[calc(100vh-16rem)]"
+            style={{
+              gridTemplateColumns: `repeat(${columnsToShow.length}, minmax(0, 1fr))`,
+            }}
+          >
+            {columnsToShow.map((status) => (
+              <KanbanColumn
+                key={status}
+                status={status}
+                applications={getApplicationsForColumn(status)}
+              />
+            ))}
+          </div>
+
+          <DragOverlay>
+            {activeCard ? (
+              <ApplicationCardComponent application={activeCard} isOverlay />
+            ) : null}
+          </DragOverlay>
+        </DndContext>
+      )}
 
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="sm:max-w-lg">
