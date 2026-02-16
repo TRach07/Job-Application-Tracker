@@ -214,9 +214,23 @@ export const fr: TranslationDictionary = {
     privacy:
       "Nous utilisons l'acc\u00e8s en lecture seule \u00e0 Gmail pour d\u00e9tecter vos candidatures. Vos donn\u00e9es restent locales.",
   },
+  errors: {
+    syncSuccess: "Synchronisation terminée",
+    syncSuccessNoEmails: "Synchronisation terminée : aucun nouvel email",
+    syncError: "Erreur de synchronisation",
+    syncAuthRevoked: "L'accès Gmail a été révoqué. Veuillez reconnecter votre compte.",
+    syncRateLimited: "Veuillez patienter avant de resynchroniser.",
+    statusUpdated: "Statut mis à jour",
+    statusUpdateError: "Erreur lors de la mise à jour du statut",
+    applicationCreated: "Candidature ajoutée avec succès",
+    applicationCreateError: "Erreur lors de la création de la candidature",
+    applicationDeleteError: "Erreur lors de la suppression de la candidature",
+    fetchError: "Erreur lors du chargement des données",
+    reconnectGoogle: "Reconnecter Google",
+  },
   ai: {
-    languageInstruction: "IMPORTANT : R\u00e9ponds UNIQUEMENT en fran\u00e7ais.",
-    noEmailExchanges: "Aucun \u00e9change email",
+    languageInstruction: "IMPORTANT : Réponds UNIQUEMENT en français.",
+    noEmailExchanges: "Aucun échange email",
     defaultUser: "l'utilisateur",
   },
 };

@@ -210,6 +210,20 @@ export interface TranslationDictionary {
     button: string;
     privacy: string;
   };
+  errors: {
+    syncSuccess: string;
+    syncSuccessNoEmails: string;
+    syncError: string;
+    syncAuthRevoked: string;
+    syncRateLimited: string;
+    statusUpdated: string;
+    statusUpdateError: string;
+    applicationCreated: string;
+    applicationCreateError: string;
+    applicationDeleteError: string;
+    fetchError: string;
+    reconnectGoogle: string;
+  };
   ai: {
     languageInstruction: string;
     noEmailExchanges: string;

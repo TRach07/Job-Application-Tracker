@@ -12,21 +12,29 @@ interface SyncResult {
   pendingReviewCount: number;
 }
 
+export type SyncErrorCode = "TOKEN_REVOKED" | "REFRESH_FAILED" | "NO_TOKEN" | "RATE_LIMITED" | null;
+
 export function useEmailSync() {
   const { isSyncing, setSyncing } = useUIStore();
   const [result, setResult] = useState<SyncResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<SyncErrorCode>(null);
 
   const sync = async (): Promise<SyncResult> => {
     setSyncing(true);
     setError(null);
+    setErrorCode(null);
     setResult(null);
 
     try {
       const res = await fetch("/api/emails/sync", { method: "POST" });
       const json = await res.json();
 
-      if (!res.ok) throw new Error(json.error);
+      if (!res.ok) {
+        const code = json.code as SyncErrorCode ?? null;
+        setErrorCode(res.status === 429 ? "RATE_LIMITED" : code);
+        throw new Error(json.error || "Sync failed");
+      }
 
       const data: SyncResult = {
         emailsFound: json.data.emailsFound,
@@ -49,5 +57,5 @@ export function useEmailSync() {
     }
   };
 
-  return { sync, isSyncing, result, error };
+  return { sync, isSyncing, result, error, errorCode };
 }

@@ -27,7 +27,7 @@ export function useApplications() {
       if (!res.ok) throw new Error(json.error);
       setApplications(json.data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur inconnue");
+      setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setLoading(false);
     }
@@ -65,11 +65,12 @@ export function useApplications() {
           body: JSON.stringify({ status }),
         });
         if (!res.ok) {
-          fetchApplications();
-          throw new Error("Failed to update");
+          await fetchApplications();
+          throw new Error("Failed to update status");
         }
-      } catch {
-        fetchApplications();
+      } catch (err) {
+        await fetchApplications();
+        throw err;
       }
     },
     [moveApplication, fetchApplications]
@@ -83,10 +84,12 @@ export function useApplications() {
           method: "DELETE",
         });
         if (!res.ok) {
-          fetchApplications();
+          await fetchApplications();
+          throw new Error("Failed to delete application");
         }
-      } catch {
-        fetchApplications();
+      } catch (err) {
+        await fetchApplications();
+        throw err;
       }
     },
     [removeApplication, fetchApplications]

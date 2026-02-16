@@ -3,6 +3,18 @@ import { env } from "@/lib/env";
 
 const GMAIL_API_BASE = "https://www.googleapis.com/gmail/v1/users/me";
 
+export type GmailAuthErrorCode = "TOKEN_REVOKED" | "REFRESH_FAILED" | "NO_TOKEN";
+
+export class GmailAuthError extends Error {
+  code: GmailAuthErrorCode;
+
+  constructor(message: string, code: GmailAuthErrorCode) {
+    super(message);
+    this.name = "GmailAuthError";
+    this.code = code;
+  }
+}
+
 interface GmailMessage {
   id: string;
   threadId: string;
@@ -85,7 +97,10 @@ async function refreshAccessToken(userId: string): Promise<string> {
   });
 
   if (!user?.refreshToken) {
-    throw new Error("No refresh token available");
+    throw new GmailAuthError(
+      "No refresh token available. Please reconnect your Google account.",
+      "NO_TOKEN"
+    );
   }
 
   const response = await fetch("https://oauth2.googleapis.com/token", {
@@ -100,7 +115,19 @@ async function refreshAccessToken(userId: string): Promise<string> {
   });
 
   if (!response.ok) {
-    throw new Error("Failed to refresh access token");
+    const body = await response.json().catch(() => ({}));
+    const errorType = body?.error;
+    // Google returns "invalid_grant" when the refresh token is revoked or expired
+    if (errorType === "invalid_grant") {
+      throw new GmailAuthError(
+        "Gmail authorization has been revoked. Please reconnect your account.",
+        "TOKEN_REVOKED"
+      );
+    }
+    throw new GmailAuthError(
+      "Failed to refresh access token",
+      "REFRESH_FAILED"
+    );
   }
 
   const data = await response.json();
@@ -125,7 +152,10 @@ async function gmailFetch(
   });
 
   if (!user?.accessToken) {
-    throw new Error("No access token available");
+    throw new GmailAuthError(
+      "No access token available. Please reconnect your Google account.",
+      "NO_TOKEN"
+    );
   }
 
   const response = await fetch(`${GMAIL_API_BASE}${path}`, {
@@ -135,6 +165,13 @@ async function gmailFetch(
   if (response.status === 401 && !retried) {
     await refreshAccessToken(userId);
     return gmailFetch(userId, path, true);
+  }
+
+  if (response.status === 403) {
+    throw new GmailAuthError(
+      "Gmail access denied. Your permissions may have been revoked. Please reconnect your account.",
+      "TOKEN_REVOKED"
+    );
   }
 
   return response;

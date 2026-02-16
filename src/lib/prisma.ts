@@ -5,8 +5,8 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-function isNeonUrl(url: string): boolean {
-  return url.includes("neon.tech");
+function isNeonUrl(url?: string): boolean {
+  return !!url && url.includes("neon.tech");
 }
 
 async function createClient(): Promise<PrismaClient> {
@@ -23,11 +23,21 @@ async function createClient(): Promise<PrismaClient> {
   return new PrismaClient({ adapter } as never);
 }
 
-const prismaPromise = globalForPrisma.prisma
-  ? Promise.resolve(globalForPrisma.prisma)
-  : createClient().then((client) => {
-      if (env.NODE_ENV !== "production") globalForPrisma.prisma = client;
-      return client;
-    });
+async function getClient(): Promise<PrismaClient> {
+  if (globalForPrisma.prisma) return globalForPrisma.prisma;
 
-export const prisma = await prismaPromise;
+  const client = await createClient();
+  if (env.NODE_ENV !== "production") globalForPrisma.prisma = client;
+  return client;
+}
+
+// During build phase, DATABASE_URL may not exist — use a lazy proxy
+const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
+
+export const prisma: PrismaClient = isBuildPhase
+  ? (new Proxy({} as PrismaClient, {
+      get(_, prop) {
+        throw new Error(`prisma.${String(prop)} called during build phase`);
+      },
+    }))
+  : await getClient();

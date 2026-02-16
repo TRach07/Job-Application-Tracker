@@ -7,17 +7,21 @@ export function useEmailReview() {
   const [queue, setQueue] = useState<EmailReviewItem[]>([]);
   const [filteredEmails, setFilteredEmails] = useState<EmailReviewItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchQueue = useCallback(async () => {
     setIsLoading(true);
+    setError(null);
     try {
       const res = await fetch("/api/emails/review");
       const json = await res.json();
       if (res.ok) {
         setQueue(json.data || []);
+      } else {
+        setError(json.error || "Failed to load review queue");
       }
     } catch {
-      // Silently fail, queue stays empty
+      setError("Failed to load review queue");
     } finally {
       setIsLoading(false);
     }
@@ -29,9 +33,11 @@ export function useEmailReview() {
       const json = await res.json();
       if (res.ok) {
         setFilteredEmails(json.data || []);
+      } else {
+        setError(json.error || "Failed to load filtered emails");
       }
     } catch {
-      // Silently fail
+      setError("Failed to load filtered emails");
     }
   }, []);
 
@@ -80,6 +86,7 @@ export function useEmailReview() {
     queue,
     filteredEmails,
     isLoading,
+    error,
     fetchQueue,
     fetchFilteredEmails,
     processAction,

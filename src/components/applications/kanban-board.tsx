@@ -44,7 +44,7 @@ export function KanbanBoard() {
     updateStatus,
     fetchApplications,
   } = useApplications();
-  const { sync, isSyncing } = useEmailSync();
+  const { sync, isSyncing, errorCode: syncErrorCode } = useEmailSync();
   const { t } = useTranslation();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -117,12 +117,12 @@ export function KanbanBoard() {
 
       try {
         await updateStatus(applicationId, newStatus);
-        toast.success("Statut mis a jour");
+        toast.success(t.errors.statusUpdated);
       } catch {
-        toast.error("Erreur lors de la mise a jour du statut");
+        toast.error(t.errors.statusUpdateError);
       }
     },
-    [applications, updateStatus]
+    [applications, updateStatus, t]
   );
 
   const handleSync = useCallback(async () => {
@@ -130,22 +130,22 @@ export function KanbanBoard() {
       const result = await sync();
       const parts = [];
       if (result.emailsFound > 0)
-        parts.push(`${result.emailsFound} emails trouves`);
+        parts.push(`${result.emailsFound} emails`);
       if (result.emailsFiltered > 0)
-        parts.push(`${result.emailsFiltered} filtres`);
+        parts.push(`${result.emailsFiltered} filtered`);
       if (result.emailsParsed > 0)
-        parts.push(`${result.emailsParsed} analyses`);
+        parts.push(`${result.emailsParsed} parsed`);
       if (result.parseErrors > 0)
-        parts.push(`${result.parseErrors} erreurs`);
+        parts.push(`${result.parseErrors} errors`);
       if (result.pendingReviewCount > 0)
-        parts.push(`${result.pendingReviewCount} en attente de review`);
+        parts.push(`${result.pendingReviewCount} pending review`);
 
       if (parts.length > 0) {
         const hasErrors = result.parseErrors > 0;
         const toastFn = hasErrors ? toast.warning : toast.success;
-        toastFn(`Synchronisation terminee : ${parts.join(", ")}`);
+        toastFn(`${t.errors.syncSuccess}: ${parts.join(", ")}`);
       } else {
-        toast.success("Synchronisation terminee : aucun nouvel email");
+        toast.success(t.errors.syncSuccessNoEmails);
       }
 
       setPendingReviewCount(result.pendingReviewCount || 0);
@@ -155,24 +155,33 @@ export function KanbanBoard() {
       }
 
       await fetchApplications();
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Erreur lors de la synchronisation";
-      toast.error(message);
+    } catch {
+      if (syncErrorCode === "TOKEN_REVOKED" || syncErrorCode === "NO_TOKEN" || syncErrorCode === "REFRESH_FAILED") {
+        toast.error(t.errors.syncAuthRevoked, {
+          action: {
+            label: t.errors.reconnectGoogle,
+            onClick: () => window.location.href = "/api/auth/signin",
+          },
+        });
+      } else if (syncErrorCode === "RATE_LIMITED") {
+        toast.warning(t.errors.syncRateLimited);
+      } else {
+        toast.error(t.errors.syncError);
+      }
     }
-  }, [sync, fetchApplications]);
+  }, [sync, fetchApplications, syncErrorCode, t]);
 
   const handleCreateApplication = useCallback(
     async (data: CreateApplicationInput) => {
       try {
         await createApplication(data);
         setIsFormOpen(false);
-        toast.success("Candidature ajoutee avec succes");
+        toast.success(t.errors.applicationCreated);
       } catch {
-        toast.error("Erreur lors de la creation de la candidature");
+        toast.error(t.errors.applicationCreateError);
       }
     },
-    [createApplication]
+    [createApplication, t]
   );
 
   const handleReviewOpenChange = useCallback(

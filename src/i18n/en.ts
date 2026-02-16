@@ -214,6 +214,20 @@ export const en: TranslationDictionary = {
     privacy:
       "We use read-only access to Gmail to detect your applications. Your data stays local.",
   },
+  errors: {
+    syncSuccess: "Sync completed",
+    syncSuccessNoEmails: "Sync completed: no new emails",
+    syncError: "Sync failed",
+    syncAuthRevoked: "Gmail access has been revoked. Please reconnect your account.",
+    syncRateLimited: "Please wait before syncing again.",
+    statusUpdated: "Status updated",
+    statusUpdateError: "Failed to update status",
+    applicationCreated: "Application added successfully",
+    applicationCreateError: "Failed to create application",
+    applicationDeleteError: "Failed to delete application",
+    fetchError: "Failed to load data",
+    reconnectGoogle: "Reconnect Google",
+  },
   ai: {
     languageInstruction: "IMPORTANT: Respond ONLY in English.",
     noEmailExchanges: "No email exchanges",

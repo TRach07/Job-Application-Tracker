@@ -4,6 +4,7 @@ import { syncEmails } from "@/services/email-sync.service";
 import { parseUnparsedEmails } from "@/services/email-parser.service";
 import { getPendingReviewCount } from "@/services/email-review.service";
 import { rateLimit } from "@/lib/rate-limit";
+import { GmailAuthError } from "@/lib/gmail";
 
 export const POST = withAuth(async (_req, { userId }) => {
   const limited = rateLimit(`sync:${userId}`, 1, 60_000);
@@ -28,4 +29,15 @@ export const POST = withAuth(async (_req, { userId }) => {
       pendingReviewCount,
     },
   });
-}, { route: "POST /api/emails/sync" });
+}, {
+  route: "POST /api/emails/sync",
+  onError: (error) => {
+    if (error instanceof GmailAuthError) {
+      return NextResponse.json(
+        { error: error.message, code: error.code },
+        { status: 401 }
+      );
+    }
+    return null;
+  },
+});
