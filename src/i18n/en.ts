@@ -69,6 +69,13 @@ export const en: TranslationDictionary = {
     recentActivityEmpty: "No applications",
     recentActivityEmptyDesc:
       "Start by adding your first application to track your progress.",
+    actionsTitle: "Actions required",
+    actionsPending: "pending",
+    actionsAllClear: "All clear!",
+    actionsAllClearDesc: "No actions required right now.",
+    actionView: "View",
+    actionPrepare: "Prepare",
+    actionFollowUp: "Follow up",
   },
   applications: {
     title: "Applications",

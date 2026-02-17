@@ -70,6 +70,13 @@ export interface TranslationDictionary {
     recentActivityTitle: string;
     recentActivityEmpty: string;
     recentActivityEmptyDesc: string;
+    actionsTitle: string;
+    actionsPending: string;
+    actionsAllClear: string;
+    actionsAllClearDesc: string;
+    actionView: string;
+    actionPrepare: string;
+    actionFollowUp: string;
   };
   applications: {
     title: string;

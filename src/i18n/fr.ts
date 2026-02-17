@@ -69,6 +69,13 @@ export const fr: TranslationDictionary = {
     recentActivityEmpty: "Aucune candidature",
     recentActivityEmptyDesc:
       "Commencez par ajouter votre premi\u00e8re candidature pour suivre vos d\u00e9marches.",
+    actionsTitle: "Actions requises",
+    actionsPending: "en attente",
+    actionsAllClear: "Tout est en ordre !",
+    actionsAllClearDesc: "Aucune action requise pour le moment.",
+    actionView: "Voir",
+    actionPrepare: "Pr\u00e9parer",
+    actionFollowUp: "Relancer",
   },
   applications: {
     title: "Candidatures",

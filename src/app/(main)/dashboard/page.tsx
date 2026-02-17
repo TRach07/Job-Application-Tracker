@@ -3,6 +3,7 @@
 import { StatsCards } from "@/components/dashboard/stats-cards";
 import { StatusChart } from "@/components/dashboard/status-chart";
 import { RecentActivity } from "@/components/dashboard/recent-activity";
+import { ActionsRequired } from "@/components/dashboard/actions-required";
 import { useTranslation } from "@/hooks/use-translation";
 
 export default function DashboardPage() {
@@ -21,8 +22,10 @@ export default function DashboardPage() {
 
       <div className="grid gap-6 md:grid-cols-2">
         <StatusChart />
-        <RecentActivity />
+        <ActionsRequired />
       </div>
+
+      <RecentActivity />
     </div>
   );
 }
