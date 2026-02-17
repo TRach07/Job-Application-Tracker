@@ -241,6 +241,13 @@ export const en: TranslationDictionary = {
     privacy:
       "We use read-only access to Gmail to detect your applications. Your data stays local.",
   },
+  export: {
+    button: "Export",
+    csv: "Export CSV",
+    pdf: "Print / PDF",
+    csvSuccess: "CSV exported successfully",
+    exportError: "Export failed",
+  },
   notifications: {
     title: "Notifications",
     empty: "No notifications",

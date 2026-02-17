@@ -1,6 +1,7 @@
 "use client";
 
 import { KanbanBoard } from "@/components/applications/kanban-board";
+import { ExportButtons } from "@/components/applications/export-buttons";
 import { useTranslation } from "@/hooks/use-translation";
 
 export default function ApplicationsPage() {
@@ -15,6 +16,7 @@ export default function ApplicationsPage() {
             {t.applications.subtitle}
           </p>
         </div>
+        <ExportButtons />
       </div>
 
       <KanbanBoard />

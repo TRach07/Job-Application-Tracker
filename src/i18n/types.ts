@@ -237,6 +237,13 @@ export interface TranslationDictionary {
     button: string;
     privacy: string;
   };
+  export: {
+    button: string;
+    csv: string;
+    pdf: string;
+    csvSuccess: string;
+    exportError: string;
+  };
   notifications: {
     title: string;
     empty: string;

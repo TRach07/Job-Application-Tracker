@@ -241,6 +241,13 @@ export const fr: TranslationDictionary = {
     privacy:
       "Nous utilisons l'acc\u00e8s en lecture seule \u00e0 Gmail pour d\u00e9tecter vos candidatures. Vos donn\u00e9es restent locales.",
   },
+  export: {
+    button: "Exporter",
+    csv: "Exporter CSV",
+    pdf: "Imprimer / PDF",
+    csvSuccess: "CSV exporté avec succès",
+    exportError: "Erreur lors de l'export",
+  },
   notifications: {
     title: "Notifications",
     empty: "Aucune notification",

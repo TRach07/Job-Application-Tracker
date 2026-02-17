@@ -124,3 +124,33 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Print styles for PDF export */
+@media print {
+  /* Hide non-essential UI */
+  header,
+  nav,
+  aside,
+  .no-print,
+  button,
+  [role="dialog"] {
+    display: none !important;
+  }
+
+  /* Reset dark mode for readable print */
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 11pt;
+  }
+
+  /* Show full content */
+  main {
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+}
