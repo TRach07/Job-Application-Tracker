@@ -14,6 +14,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { MobileNav } from "./mobile-nav";
 import { NotificationBell } from "./notification-bell";
 import { ThemeToggle } from "./theme-toggle";
+import { GlobalSearch } from "./global-search";
 import { useTranslation } from "@/hooks/use-translation";
 
 export function Header() {
@@ -44,6 +45,10 @@ export function Header() {
             <MobileNav />
           </SheetContent>
         </Sheet>
+      </div>
+
+      <div className="flex-1 flex justify-center px-4">
+        <GlobalSearch />
       </div>
 
       <div className="flex items-center gap-2">

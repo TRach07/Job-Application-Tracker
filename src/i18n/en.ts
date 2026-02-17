@@ -255,6 +255,14 @@ export const en: TranslationDictionary = {
     csvSuccess: "CSV exported successfully",
     exportError: "Export failed",
   },
+  search: {
+    placeholder: "Search...",
+    inputPlaceholder: "Search applications, pages...",
+    title: "Search",
+    noResults: "No results found.",
+    pages: "Pages",
+    applications: "Applications",
+  },
   notifications: {
     title: "Notifications",
     empty: "No notifications",

@@ -251,6 +251,14 @@ export interface TranslationDictionary {
     csvSuccess: string;
     exportError: string;
   };
+  search: {
+    placeholder: string;
+    inputPlaceholder: string;
+    title: string;
+    noResults: string;
+    pages: string;
+    applications: string;
+  };
   notifications: {
     title: string;
     empty: string;
