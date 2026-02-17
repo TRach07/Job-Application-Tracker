@@ -12,6 +12,7 @@ import {
 import { LogOut, Menu, Languages } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { MobileNav } from "./mobile-nav";
+import { NotificationBell } from "./notification-bell";
 import { useTranslation } from "@/hooks/use-translation";
 
 export function Header() {
@@ -49,6 +50,8 @@ export function Header() {
           <Languages className="h-4 w-4" />
           <span className="text-xs font-medium uppercase">{locale}</span>
         </Button>
+
+        <NotificationBell />
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

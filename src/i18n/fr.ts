@@ -241,6 +241,14 @@ export const fr: TranslationDictionary = {
     privacy:
       "Nous utilisons l'acc\u00e8s en lecture seule \u00e0 Gmail pour d\u00e9tecter vos candidatures. Vos donn\u00e9es restent locales.",
   },
+  notifications: {
+    title: "Notifications",
+    empty: "Aucune notification",
+    count: "{count} notification(s) nécessitant votre attention",
+    staleMessage: "Pas de réponse de {company} depuis {days} jours",
+    interviewMessage: "Entretien chez {company} dans {days} jour(s)",
+    followUpMessage: "Pensez à relancer {company} ({days} jours depuis la candidature)",
+  },
   errors: {
     syncSuccess: "Synchronisation terminée",
     syncSuccessNoEmails: "Synchronisation terminée : aucun nouvel email",

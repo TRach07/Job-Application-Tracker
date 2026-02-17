@@ -241,6 +241,14 @@ export const en: TranslationDictionary = {
     privacy:
       "We use read-only access to Gmail to detect your applications. Your data stays local.",
   },
+  notifications: {
+    title: "Notifications",
+    empty: "No notifications",
+    count: "{count} notification(s) requiring attention",
+    staleMessage: "No response from {company} for {days} days",
+    interviewMessage: "Interview at {company} in {days} day(s)",
+    followUpMessage: "Consider following up with {company} ({days} days since application)",
+  },
   errors: {
     syncSuccess: "Sync completed",
     syncSuccessNoEmails: "Sync completed: no new emails",

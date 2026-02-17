@@ -237,6 +237,14 @@ export interface TranslationDictionary {
     button: string;
     privacy: string;
   };
+  notifications: {
+    title: string;
+    empty: string;
+    count: string;
+    staleMessage: string;
+    interviewMessage: string;
+    followUpMessage: string;
+  };
   errors: {
     syncSuccess: string;
     syncSuccessNoEmails: string;
