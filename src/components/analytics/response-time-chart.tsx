@@ -10,25 +10,32 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  ComposedChart,
+  BarChart,
   Bar,
-  Line,
   XAxis,
   YAxis,
   ResponsiveContainer,
   Tooltip,
-  Legend,
+  Cell,
 } from "recharts";
 import { useTranslation } from "@/hooks/use-translation";
 
-interface WeekData {
-  week: string;
+interface BucketData {
+  bucket: string;
   count: number;
-  avg: number | null;
 }
 
-export function TimelineChart() {
-  const [data, setData] = useState<WeekData[]>([]);
+const BUCKET_COLORS = [
+  "hsl(142, 71%, 45%)", // 0-3d - green (fast)
+  "hsl(142, 50%, 55%)", // 4-7d - light green
+  "hsl(36, 92%, 50%)",  // 8-14d - amber
+  "hsl(24, 92%, 50%)",  // 15-30d - orange
+  "hsl(0, 72%, 51%)",   // 30d+ - red (slow)
+];
+
+export function ResponseTimeChart() {
+  const [data, setData] = useState<BucketData[]>([]);
+  const [avgDays, setAvgDays] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { t, locale } = useTranslation();
 
@@ -39,7 +46,8 @@ export function TimelineChart() {
         const json = await res.json();
         if (!res.ok) throw new Error(json.error);
 
-        setData(json.data.timeline || []);
+        setData(json.data.responseTimeDistribution || []);
+        setAvgDays(json.data.avgResponseTimeDays ?? null);
       } catch {
         setData([]);
       } finally {
@@ -54,36 +62,47 @@ export function TimelineChart() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>{t.analytics.timelineTitle}</CardTitle>
+          <CardTitle>{t.analytics.responseTimeTitle}</CardTitle>
         </CardHeader>
         <CardContent>
-          <Skeleton className="h-72 w-full" />
+          <Skeleton className="h-48 w-full" />
         </CardContent>
       </Card>
     );
   }
 
+  const hasData = data.some((d) => d.count > 0);
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t.analytics.timelineTitle}</CardTitle>
-        <CardDescription>{t.analytics.timelineDesc}</CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>{t.analytics.responseTimeTitle}</CardTitle>
+            <CardDescription>{t.analytics.responseTimeDesc}</CardDescription>
+          </div>
+          {avgDays !== null && (
+            <div className="text-right">
+              <div className="text-2xl font-bold text-zinc-100">{avgDays}d</div>
+              <div className="text-xs text-zinc-500">{t.analytics.responseTimeAvg}</div>
+            </div>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
-        {data.length === 0 || data.every((d) => d.count === 0) ? (
-          <div className="flex h-72 items-center justify-center text-sm text-muted-foreground">
-            {t.analytics.timelineEmpty}
+        {!hasData ? (
+          <div className="flex h-48 items-center justify-center text-sm text-muted-foreground">
+            {t.analytics.avgResponseTimeNoData}
           </div>
         ) : (
-          <div className="h-72 w-full">
+          <div className="h-48 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+              <BarChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                 <XAxis
-                  dataKey="week"
+                  dataKey="bucket"
                   tick={{ fill: "hsl(215, 20%, 65%)", fontSize: 11 }}
                   tickLine={false}
                   axisLine={false}
-                  interval="preserveStartEnd"
                 />
                 <YAxis
                   allowDecimals={false}
@@ -102,29 +121,14 @@ export function TimelineChart() {
                   itemStyle={{ color: "hsl(var(--popover-foreground))" }}
                   labelStyle={{ color: "hsl(var(--popover-foreground))" }}
                   cursor={{ fill: "hsl(215, 20%, 50%, 0.1)" }}
+                  formatter={(value) => [value as number, t.analytics.timelineBarName]}
                 />
-                <Legend
-                  verticalAlign="top"
-                  iconType="circle"
-                  wrapperStyle={{ fontSize: 12, color: "hsl(215, 20%, 65%)", paddingBottom: 8 }}
-                />
-                <Bar
-                  dataKey="count"
-                  name={t.analytics.timelineBarName}
-                  fill="hsl(221, 83%, 53%)"
-                  radius={[4, 4, 0, 0]}
-                  maxBarSize={40}
-                />
-                <Line
-                  dataKey="avg"
-                  name={t.analytics.timelineAvgName}
-                  type="monotone"
-                  stroke="hsl(36, 92%, 50%)"
-                  strokeWidth={2}
-                  dot={false}
-                  connectNulls
-                />
-              </ComposedChart>
+                <Bar dataKey="count" radius={[4, 4, 0, 0]} maxBarSize={50}>
+                  {data.map((_, index) => (
+                    <Cell key={index} fill={BUCKET_COLORS[index] || BUCKET_COLORS[4]} />
+                  ))}
+                </Bar>
+              </BarChart>
             </ResponsiveContainer>
           </div>
         )}

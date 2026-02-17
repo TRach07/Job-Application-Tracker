@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useState } from "react";
-import { Activity, TrendingUp, Calendar, Bell } from "lucide-react";
+import { Activity, TrendingUp, Calendar, Bell, Clock } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -25,6 +25,7 @@ interface Stats {
   responseRate: number;
   interviews: number;
   pendingFollowUps: number;
+  avgResponseTimeDays: number | null;
 }
 
 const ACTIVE_STATUSES: ApplicationStatus[] = [
@@ -58,7 +59,7 @@ function computeStats(applications: ApplicationData[]): Stats {
     return count;
   }, 0);
 
-  return { active, responseRate, interviews, pendingFollowUps };
+  return { active, responseRate, interviews, pendingFollowUps, avgResponseTimeDays: null };
 }
 
 function StatsCardSkeleton() {
@@ -84,13 +85,21 @@ export function StatsCards() {
   useEffect(() => {
     async function fetchStats() {
       try {
-        const res = await fetch("/api/applications");
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error);
-        const computed = computeStats(json.data);
+        const [appsRes, analyticsRes] = await Promise.all([
+          fetch("/api/applications"),
+          fetch("/api/analytics"),
+        ]);
+        const appsJson = await appsRes.json();
+        if (!appsRes.ok) throw new Error(appsJson.error);
+
+        const computed = computeStats(appsJson.data);
+
+        const analyticsJson = analyticsRes.ok ? await analyticsRes.json() : null;
+        computed.avgResponseTimeDays = analyticsJson?.data?.avgResponseTimeDays ?? null;
+
         setStats(computed);
       } catch {
-        setStats({ active: 0, responseRate: 0, interviews: 0, pendingFollowUps: 0 });
+        setStats({ active: 0, responseRate: 0, interviews: 0, pendingFollowUps: 0, avgResponseTimeDays: null });
       } finally {
         setIsLoading(false);
       }
@@ -101,8 +110,8 @@ export function StatsCards() {
 
   if (isLoading) {
     return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+        {Array.from({ length: 5 }).map((_, i) => (
           <StatsCardSkeleton key={i} />
         ))}
       </div>
@@ -142,13 +151,21 @@ export function StatsCards() {
       description: t.dashboard.statsPendingFollowUpsDesc,
       iconColor: "text-amber-500",
     },
+    {
+      key: "avgResponseTimeDays" as const,
+      title: t.dashboard.statsAvgResponseTitle,
+      icon: Clock,
+      format: (v: number | null) => v === null ? t.analytics.avgResponseTimeNoData : `${v}d`,
+      description: t.dashboard.statsAvgResponseDesc,
+      iconColor: "text-orange-500",
+    },
   ];
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
       {STAT_CARDS.map((card) => {
         const Icon = card.icon;
-        const value = stats ? stats[card.key] : 0;
+        const value = stats ? stats[card.key] : null;
 
         return (
           <Card key={card.key} className="bg-zinc-950 border-zinc-800">
@@ -160,7 +177,7 @@ export function StatsCards() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-zinc-50">
-                {card.format(value)}
+                {card.format(value as never)}
               </div>
               <p className="text-xs text-zinc-500 mt-1">
                 {card.description}
