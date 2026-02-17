@@ -83,8 +83,8 @@ export function ResponseTimeChart() {
           </div>
           {avgDays !== null && (
             <div className="text-right">
-              <div className="text-2xl font-bold text-zinc-100">{avgDays}d</div>
-              <div className="text-xs text-zinc-500">{t.analytics.responseTimeAvg}</div>
+              <div className="text-2xl font-bold text-foreground">{avgDays}d</div>
+              <div className="text-xs text-muted-foreground">{t.analytics.responseTimeAvg}</div>
             </div>
           )}
         </div>

@@ -73,9 +73,9 @@ function CustomTooltip({ active, payload, t }: CustomTooltipProps) {
 
   const data = payload[0];
   return (
-    <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 shadow-md">
-      <p className="text-sm font-medium text-zinc-50">{data.name}</p>
-      <p className="text-sm text-zinc-400">
+    <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-md">
+      <p className="text-sm font-medium text-card-foreground">{data.name}</p>
+      <p className="text-sm text-muted-foreground">
         {data.value} {data.value > 1 ? t.dashboard.statusChartTooltipPlural : t.dashboard.statusChartTooltip}
       </p>
     </div>
@@ -84,7 +84,7 @@ function CustomTooltip({ active, payload, t }: CustomTooltipProps) {
 
 function ChartSkeleton() {
   return (
-    <Card className="bg-zinc-950 border-zinc-800">
+    <Card className="bg-card border-border">
       <CardHeader>
         <Skeleton className="h-5 w-48" />
       </CardHeader>
@@ -125,16 +125,16 @@ export function StatusChart() {
   const total = chartData.reduce((sum, d) => sum + d.value, 0);
 
   return (
-    <Card className="bg-zinc-950 border-zinc-800">
+    <Card className="bg-card border-border">
       <CardHeader>
-        <CardTitle className="text-zinc-50">
+        <CardTitle className="text-card-foreground">
           {t.dashboard.statusChartTitle}
         </CardTitle>
       </CardHeader>
       <CardContent>
         {chartData.length === 0 ? (
           <div className="flex items-center justify-center h-[300px]">
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-muted-foreground">
               {t.dashboard.statusChartEmpty}
             </p>
           </div>
@@ -162,7 +162,7 @@ export function StatusChart() {
               <Legend
                 verticalAlign="bottom"
                 formatter={(value: string) => (
-                  <span className="text-sm text-zinc-400">{value}</span>
+                  <span className="text-sm text-muted-foreground">{value}</span>
                 )}
               />
               <text
@@ -170,7 +170,7 @@ export function StatusChart() {
                 y="47%"
                 textAnchor="middle"
                 dominantBaseline="middle"
-                className="fill-zinc-50 text-3xl font-bold"
+                className="fill-foreground text-3xl font-bold"
               >
                 {total}
               </text>
@@ -179,7 +179,7 @@ export function StatusChart() {
                 y="56%"
                 textAnchor="middle"
                 dominantBaseline="middle"
-                className="fill-zinc-500 text-xs"
+                className="fill-muted-foreground text-xs"
               >
                 {t.common.total}
               </text>

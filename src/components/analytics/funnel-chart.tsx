@@ -95,9 +95,9 @@ export function FunnelChart() {
               return (
                 <div key={STAGE_KEYS[i]}>
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-zinc-300">{stage.stage}</span>
+                    <span className="text-sm font-medium text-muted-foreground">{stage.stage}</span>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-zinc-100">{stage.count}</span>
+                      <span className="text-sm font-bold text-foreground">{stage.count}</span>
                       {i > 0 && (
                         <span className={`text-xs px-1.5 py-0.5 rounded ${
                           stage.conversionRate >= 50
@@ -111,7 +111,7 @@ export function FunnelChart() {
                       )}
                     </div>
                   </div>
-                  <div className="h-8 w-full rounded bg-zinc-800/50">
+                  <div className="h-8 w-full rounded bg-muted">
                     <div
                       className="h-full rounded transition-all duration-500"
                       style={{

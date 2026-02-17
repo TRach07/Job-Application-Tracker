@@ -75,7 +75,7 @@ export function CompanyTable() {
         ) : (
           <div className="space-y-2 max-h-80 overflow-y-auto">
             {/* Header row */}
-            <div className="grid grid-cols-12 gap-2 text-xs text-zinc-500 font-medium px-2 pb-1 border-b border-zinc-800">
+            <div className="grid grid-cols-12 gap-2 text-xs text-muted-foreground font-medium px-2 pb-1 border-b border-border">
               <div className="col-span-4">{t.analytics.companyTableCompany}</div>
               <div className="col-span-2 text-center">{t.common.total}</div>
               <div className="col-span-3 text-center">{t.analytics.responseRateTitle}</div>
@@ -84,9 +84,9 @@ export function CompanyTable() {
             {data.map((row) => (
               <div
                 key={row.company}
-                className="grid grid-cols-12 gap-2 items-center px-2 py-1.5 rounded hover:bg-zinc-800/50 transition-colors"
+                className="grid grid-cols-12 gap-2 items-center px-2 py-1.5 rounded hover:bg-accent/50 transition-colors"
               >
-                <div className="col-span-4 text-sm font-medium text-zinc-200 truncate" title={row.company}>
+                <div className="col-span-4 text-sm font-medium text-foreground truncate" title={row.company}>
                   {row.company}
                 </div>
                 <div className="col-span-2 text-center">
@@ -96,7 +96,7 @@ export function CompanyTable() {
                 </div>
                 <div className="col-span-3">
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 h-1.5 rounded-full bg-zinc-800">
+                    <div className="flex-1 h-1.5 rounded-full bg-muted">
                       <div
                         className="h-full rounded-full transition-all"
                         style={{
@@ -109,7 +109,7 @@ export function CompanyTable() {
                         }}
                       />
                     </div>
-                    <span className="text-xs text-zinc-400 w-8 text-right">{row.responseRate}%</span>
+                    <span className="text-xs text-muted-foreground w-8 text-right">{row.responseRate}%</span>
                   </div>
                 </div>
                 <div className="col-span-3 flex justify-center">

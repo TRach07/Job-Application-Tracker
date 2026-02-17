@@ -13,6 +13,7 @@ import { LogOut, Menu, Languages } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { MobileNav } from "./mobile-nav";
 import { NotificationBell } from "./notification-bell";
+import { ThemeToggle } from "./theme-toggle";
 import { useTranslation } from "@/hooks/use-translation";
 
 export function Header() {
@@ -52,6 +53,7 @@ export function Header() {
         </Button>
 
         <NotificationBell />
+        <ThemeToggle />
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

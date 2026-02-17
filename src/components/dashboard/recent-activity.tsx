@@ -27,7 +27,7 @@ interface RecentApplication {
 
 function ActivitySkeleton() {
   return (
-    <Card className="bg-zinc-950 border-zinc-800">
+    <Card className="bg-card border-border">
       <CardHeader>
         <Skeleton className="h-5 w-40" />
       </CardHeader>
@@ -77,9 +77,9 @@ export function RecentActivity() {
   }
 
   return (
-    <Card className="bg-zinc-950 border-zinc-800">
+    <Card className="bg-card border-border">
       <CardHeader>
-        <CardTitle className="text-zinc-50">
+        <CardTitle className="text-card-foreground">
           {t.dashboard.recentActivityTitle}
         </CardTitle>
       </CardHeader>
@@ -95,17 +95,17 @@ export function RecentActivity() {
             {applications.map((app) => (
               <div
                 key={app.id}
-                className="flex items-center justify-between gap-4 rounded-lg border border-zinc-800 p-3 transition-colors hover:bg-zinc-900/50"
+                className="flex items-center justify-between gap-4 rounded-lg border border-border p-3 transition-colors hover:bg-accent/50"
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-sm font-semibold text-zinc-300">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold text-muted-foreground">
                     {app.company.charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-zinc-50 truncate">
+                    <p className="text-sm font-medium text-foreground truncate">
                       {app.company}
                     </p>
-                    <p className="text-xs text-zinc-500 truncate">
+                    <p className="text-xs text-muted-foreground truncate">
                       {app.position}
                     </p>
                   </div>
@@ -113,7 +113,7 @@ export function RecentActivity() {
 
                 <div className="flex items-center gap-3 shrink-0">
                   <StatusBadge status={app.status} />
-                  <span className="text-xs text-zinc-500 whitespace-nowrap">
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">
                     {formatDistanceToNow(new Date(app.updatedAt), {
                       addSuffix: true,
                       locale: dateLocale,

@@ -96,7 +96,7 @@ export function RejectionAnalysis() {
           {totalRejections > 0 && (
             <div className="text-right">
               <div className="text-2xl font-bold text-red-400">{totalRejections}</div>
-              <div className="text-xs text-zinc-500">{t.common.total}</div>
+              <div className="text-xs text-muted-foreground">{t.common.total}</div>
             </div>
           )}
         </div>
@@ -111,13 +111,13 @@ export function RejectionAnalysis() {
             {data.map((item) => (
               <div key={item.stage} className="space-y-1.5">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium text-zinc-300">{item.stageLabel}</span>
+                  <span className="font-medium text-foreground">{item.stageLabel}</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-zinc-400">{item.count}</span>
-                    <span className="text-xs text-zinc-500">({item.percentage}%)</span>
+                    <span className="text-muted-foreground">{item.count}</span>
+                    <span className="text-xs text-muted-foreground">({item.percentage}%)</span>
                   </div>
                 </div>
-                <div className="h-2 w-full rounded-full bg-zinc-800">
+                <div className="h-2 w-full rounded-full bg-muted">
                   <div
                     className="h-full rounded-full transition-all duration-500"
                     style={{
