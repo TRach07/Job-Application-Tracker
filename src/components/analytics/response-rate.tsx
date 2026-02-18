@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import {
@@ -9,17 +9,8 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import type { Application } from "@prisma/client";
 import { useTranslation } from "@/hooks/use-translation";
-
-const RESPONDED_STATUSES = [
-  "SCREENING",
-  "INTERVIEW",
-  "TECHNICAL",
-  "OFFER",
-  "ACCEPTED",
-  "REJECTED",
-];
+import { useAnalyticsUrl } from "./analytics-filters";
 
 const COLORS = {
   responded: "hsl(142, 71%, 45%)",
@@ -33,36 +24,25 @@ export function ResponseRate() {
   >([]);
   const [isLoading, setIsLoading] = useState(true);
   const { t } = useTranslation();
+  const getUrl = useAnalyticsUrl();
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await fetch("/api/applications");
+        const res = await fetch(getUrl());
         const json = await res.json();
         if (!res.ok) throw new Error(json.error);
 
-        const applications: Application[] = json.data;
-        const total = applications.length;
+        const { responseRate, total, statusDistribution } = json.data;
+        const withResponse = Object.entries(statusDistribution as Record<string, number>)
+          .filter(([s]) => s !== "APPLIED" && s !== "NO_RESPONSE")
+          .reduce((sum, [, c]) => sum + c, 0);
+        const withoutResponse = total - withResponse;
 
-        if (total === 0) {
-          setRate(0);
-          setChartData([
-            { name: t.analytics.withResponse, value: 0 },
-            { name: t.analytics.withoutResponse, value: 1 },
-          ]);
-          return;
-        }
-
-        const responded = applications.filter((app) =>
-          RESPONDED_STATUSES.includes(app.status)
-        ).length;
-        const notResponded = total - responded;
-        const percentage = Math.round((responded / total) * 100);
-
-        setRate(percentage);
+        setRate(responseRate);
         setChartData([
-          { name: t.analytics.withResponse, value: responded },
-          { name: t.analytics.withoutResponse, value: notResponded },
+          { name: t.analytics.withResponse, value: withResponse },
+          { name: t.analytics.withoutResponse, value: withoutResponse || (total === 0 ? 1 : 0) },
         ]);
       } catch {
         setRate(0);
@@ -73,7 +53,8 @@ export function ResponseRate() {
     }
 
     fetchData();
-  }, [t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [getUrl]);
 
   if (isLoading) {
     return (

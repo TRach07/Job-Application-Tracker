@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation } from "@/hooks/use-translation";
+import { useAnalyticsUrl } from "./analytics-filters";
 
 interface RejectionData {
   stage: string;
@@ -38,12 +39,13 @@ export function RejectionAnalysis() {
   const [data, setData] = useState<RejectionData[]>([]);
   const [totalRejections, setTotalRejections] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const { t, locale } = useTranslation();
+  const { t } = useTranslation();
+  const getUrl = useAnalyticsUrl();
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await fetch(`/api/analytics?locale=${locale}`);
+        const res = await fetch(getUrl());
         const json = await res.json();
         if (!res.ok) throw new Error(json.error);
 
@@ -70,7 +72,7 @@ export function RejectionAnalysis() {
 
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [locale]);
+  }, [getUrl]);
 
   if (isLoading) {
     return (

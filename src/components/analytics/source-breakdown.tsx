@@ -19,6 +19,7 @@ import {
 } from "recharts";
 import type { PieLabelRenderProps } from "recharts";
 import { useTranslation } from "@/hooks/use-translation";
+import { useAnalyticsUrl } from "./analytics-filters";
 
 interface SourceData {
   name: string;
@@ -35,12 +36,13 @@ export function SourceBreakdown() {
   const [data, setData] = useState<SourceData[]>([]);
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const { t, locale } = useTranslation();
+  const { t } = useTranslation();
+  const getUrl = useAnalyticsUrl();
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await fetch(`/api/analytics?locale=${locale}`);
+        const res = await fetch(getUrl());
         const json = await res.json();
         if (!res.ok) throw new Error(json.error);
 
@@ -69,7 +71,7 @@ export function SourceBreakdown() {
 
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [locale]);
+  }, [getUrl]);
 
   if (isLoading) {
     return (

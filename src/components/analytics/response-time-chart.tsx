@@ -19,6 +19,7 @@ import {
   Cell,
 } from "recharts";
 import { useTranslation } from "@/hooks/use-translation";
+import { useAnalyticsUrl } from "./analytics-filters";
 
 interface BucketData {
   bucket: string;
@@ -37,12 +38,13 @@ export function ResponseTimeChart() {
   const [data, setData] = useState<BucketData[]>([]);
   const [avgDays, setAvgDays] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { t, locale } = useTranslation();
+  const { t } = useTranslation();
+  const getUrl = useAnalyticsUrl();
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await fetch(`/api/analytics?locale=${locale}`);
+        const res = await fetch(getUrl());
         const json = await res.json();
         if (!res.ok) throw new Error(json.error);
 
@@ -56,7 +58,7 @@ export function ResponseTimeChart() {
     }
 
     fetchData();
-  }, [locale]);
+  }, [getUrl]);
 
   if (isLoading) {
     return (

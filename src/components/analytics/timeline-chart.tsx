@@ -20,6 +20,7 @@ import {
   Legend,
 } from "recharts";
 import { useTranslation } from "@/hooks/use-translation";
+import { useAnalyticsUrl } from "./analytics-filters";
 
 interface WeekData {
   week: string;
@@ -30,12 +31,13 @@ interface WeekData {
 export function TimelineChart() {
   const [data, setData] = useState<WeekData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { t, locale } = useTranslation();
+  const { t } = useTranslation();
+  const getUrl = useAnalyticsUrl();
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await fetch(`/api/analytics?locale=${locale}`);
+        const res = await fetch(getUrl());
         const json = await res.json();
         if (!res.ok) throw new Error(json.error);
 
@@ -48,7 +50,7 @@ export function TimelineChart() {
     }
 
     fetchData();
-  }, [locale]);
+  }, [getUrl]);
 
   if (isLoading) {
     return (

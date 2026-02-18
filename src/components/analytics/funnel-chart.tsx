@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation } from "@/hooks/use-translation";
+import { useAnalyticsUrl } from "./analytics-filters";
 
 interface FunnelStage {
   stage: string;
@@ -29,7 +30,8 @@ const BAR_COLORS = [
 export function FunnelChart() {
   const [data, setData] = useState<FunnelStage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { t, locale } = useTranslation();
+  const { t } = useTranslation();
+  const getUrl = useAnalyticsUrl();
 
   const stageLabels: Record<string, string> = {
     applied: t.analytics.funnelApplied,
@@ -42,7 +44,7 @@ export function FunnelChart() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await fetch(`/api/analytics?locale=${locale}`);
+        const res = await fetch(getUrl());
         const json = await res.json();
         if (!res.ok) throw new Error(json.error);
 
@@ -61,7 +63,7 @@ export function FunnelChart() {
 
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [locale]);
+  }, [getUrl]);
 
   if (isLoading) {
     return (

@@ -251,6 +251,17 @@ export interface TranslationDictionary {
     csvSuccess: string;
     exportError: string;
   };
+  analyticsFilters: {
+    label: string;
+    allTime: string;
+    last7d: string;
+    last30d: string;
+    last90d: string;
+    last6m: string;
+    last1y: string;
+    allSources: string;
+    active: string;
+  };
   search: {
     placeholder: string;
     inputPlaceholder: string;

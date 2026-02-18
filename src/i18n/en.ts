@@ -255,6 +255,17 @@ export const en: TranslationDictionary = {
     csvSuccess: "CSV exported successfully",
     exportError: "Export failed",
   },
+  analyticsFilters: {
+    label: "Filters",
+    allTime: "All time",
+    last7d: "Last 7 days",
+    last30d: "Last 30 days",
+    last90d: "Last 3 months",
+    last6m: "Last 6 months",
+    last1y: "Last year",
+    allSources: "All sources",
+    active: "active",
+  },
   search: {
     placeholder: "Search...",
     inputPlaceholder: "Search applications, pages...",

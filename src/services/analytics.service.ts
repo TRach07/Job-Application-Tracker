@@ -1,14 +1,45 @@
 import { prisma } from "@/lib/prisma";
-import type { ApplicationStatus } from "@prisma/client";
+import type { ApplicationStatus, ApplicationSource } from "@prisma/client";
 
 // Pipeline order for stage duration computation
 const PIPELINE_ORDER: ApplicationStatus[] = [
   "APPLIED", "SCREENING", "INTERVIEW", "TECHNICAL", "OFFER", "ACCEPTED",
 ];
 
-export async function getAnalytics(userId: string, locale: string = "fr") {
+export interface AnalyticsQueryFilters {
+  period?: string;
+  status?: ApplicationStatus;
+  source?: ApplicationSource;
+}
+
+function getPeriodDate(period: string): Date | null {
+  const now = new Date();
+  switch (period) {
+    case "7d": return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    case "30d": return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    case "90d": return new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+    case "6m": return new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);
+    case "1y": return new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+    default: return null;
+  }
+}
+
+export async function getAnalytics(
+  userId: string,
+  locale: string = "fr",
+  filters: AnalyticsQueryFilters = {},
+) {
+  // Build Prisma where clause from filters
+  const where: Record<string, unknown> = { userId };
+  if (filters.status) where.status = filters.status;
+  if (filters.source) where.source = filters.source;
+  if (filters.period) {
+    const since = getPeriodDate(filters.period);
+    if (since) where.appliedAt = { gte: since };
+  }
+
   const applications = await prisma.application.findMany({
-    where: { userId },
+    where,
     include: {
       statusHistory: { orderBy: { changedAt: "asc" } },
       _count: { select: { emails: true, followUps: true } },

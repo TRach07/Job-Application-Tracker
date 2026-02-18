@@ -20,6 +20,7 @@ import {
   LabelList,
 } from "recharts";
 import { useTranslation } from "@/hooks/use-translation";
+import { useAnalyticsUrl } from "./analytics-filters";
 
 interface StageDuration {
   stage: string;
@@ -46,12 +47,13 @@ const STAGE_COLORS: Record<string, string> = {
 export function StageDurationChart() {
   const [data, setData] = useState<StageDuration[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { t, locale } = useTranslation();
+  const { t } = useTranslation();
+  const getUrl = useAnalyticsUrl();
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await fetch(`/api/analytics?locale=${locale}`);
+        const res = await fetch(getUrl());
         const json = await res.json();
         if (!res.ok) throw new Error(json.error);
 
@@ -72,7 +74,7 @@ export function StageDurationChart() {
     }
 
     fetchData();
-  }, [t, locale]);
+  }, [t, getUrl]);
 
   if (isLoading) {
     return (
