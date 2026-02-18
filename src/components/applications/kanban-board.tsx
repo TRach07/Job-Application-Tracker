@@ -35,6 +35,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { KanbanCardSkeleton } from "@/components/shared/loading-skeleton";
 import { useTranslation } from "@/hooks/use-translation";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 
 export function KanbanBoard() {
   const {
@@ -48,6 +49,7 @@ export function KanbanBoard() {
   const { t } = useTranslation();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
+  useKeyboardShortcuts({ onNewApplication: () => setIsFormOpen(true) });
   const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [pendingReviewCount, setPendingReviewCount] = useState(0);
   const [activeCard, setActiveCard] = useState<ApplicationCardType | null>(

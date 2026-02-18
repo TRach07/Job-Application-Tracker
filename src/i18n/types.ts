@@ -297,4 +297,28 @@ export interface TranslationDictionary {
     noEmailExchanges: string;
     defaultUser: string;
   };
+  onboarding: {
+    title: string;
+    subtitle: string;
+    step1Title: string;
+    step1Desc: string;
+    step2Title: string;
+    step2Desc: string;
+    step3Title: string;
+    step3Desc: string;
+    shortcutHint: string;
+  };
+  shortcuts: {
+    title: string;
+    navigation: string;
+    actions: string;
+    goToDashboard: string;
+    goToApplications: string;
+    goToFollowUps: string;
+    goToAnalytics: string;
+    goToSettings: string;
+    newApplication: string;
+    openSearch: string;
+    toggleTheme: string;
+  };
 }

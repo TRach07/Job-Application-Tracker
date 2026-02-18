@@ -20,7 +20,7 @@ export default function AnalyticsPage() {
 
   return (
     <AnalyticsFilterProvider>
-      <div className="space-y-6">
+      <div className="space-y-6 animate-in fade-in duration-300">
         <div>
           <h1 className="text-2xl font-bold">Analytics</h1>
           <p className="text-muted-foreground">

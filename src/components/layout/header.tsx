@@ -15,12 +15,16 @@ import { MobileNav } from "./mobile-nav";
 import { NotificationBell } from "./notification-bell";
 import { ThemeToggle } from "./theme-toggle";
 import { GlobalSearch } from "./global-search";
+import { KeyboardShortcutsDialog } from "./keyboard-shortcuts-dialog";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { useTranslation } from "@/hooks/use-translation";
 
 export function Header() {
   const { data: session } = useSession();
   const user = session?.user;
   const { t, locale, setLocale } = useTranslation();
+
+  useKeyboardShortcuts();
 
   const toggleLocale = () => setLocale(locale === "fr" ? "en" : "fr");
 
@@ -59,6 +63,7 @@ export function Header() {
 
         <NotificationBell />
         <ThemeToggle />
+        <KeyboardShortcutsDialog />
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

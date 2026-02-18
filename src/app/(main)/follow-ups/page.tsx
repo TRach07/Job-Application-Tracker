@@ -7,7 +7,7 @@ export default function FollowUpsPage() {
   const { t } = useTranslation();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-300">
       <div>
         <h1 className="text-2xl font-bold">{t.followUps.title}</h1>
         <p className="text-muted-foreground">
